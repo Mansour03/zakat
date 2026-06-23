@@ -119,12 +119,28 @@
   .sync-indicator { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #4CAF50; margin-left: 4px; vertical-align: middle; }
   .sync-indicator.syncing { background: var(--gold-light); animation: pulse 1s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .splash { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; background:linear-gradient(160deg,#3D2A00 0%,#6B4800 60%,#3D2A00 100%); }
+  .splash-logo { font-size:52px; margin-bottom:10px; }
+  .splash-title { font-size:28px; font-weight:700; color:var(--gold-light); letter-spacing:3px; }
+  .splash-dots { margin-top:24px; display:flex; gap:8px; }
+  .splash-dots span { width:8px; height:8px; border-radius:50%; background:var(--gold-light); opacity:0.3; animation:dotPulse 1.2s infinite; }
+  .splash-dots span:nth-child(2) { animation-delay:0.2s; }
+  .splash-dots span:nth-child(3) { animation-delay:0.4s; }
+  @keyframes dotPulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
 </style>
 </head>
 <body>
 
+<!-- ===== LOADING SPLASH ===== -->
+<div class="splash" id="splashScreen">
+  <div class="splash-logo">⚜</div>
+  <div class="splash-title">زكاة</div>
+  <div class="splash-dots"><span></span><span></span><span></span></div>
+</div>
+
 <!-- ===== AUTH SCREEN ===== -->
-<div class="auth-screen" id="authScreen">
+<div class="auth-screen" id="authScreen" style="display:none">
   <div class="auth-logo">⚜</div>
   <div class="auth-title">زكاة</div>
   <div class="auth-sub">تتبع ثروتك ومعرفة زكاتك</div>
@@ -153,7 +169,7 @@
 </div>
 
 <!-- ===== MAIN APP ===== -->
-<div class="app-screen" id="appScreen">
+<div class="app-screen" id="appScreen" style="display:none">
 
   <div class="header">
     <div class="header-top">
@@ -342,6 +358,8 @@ window.doLogout = async function() {
 
 // ===== AUTH STATE =====
 onAuthStateChanged(auth, async (user) => {
+  // Always hide splash first
+  document.getElementById('splashScreen').style.display = 'none';
   if (user) {
     currentUser = user;
     document.getElementById('authScreen').style.display = 'none';
