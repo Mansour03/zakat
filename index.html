@@ -318,66 +318,72 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
-const db = firebase.firestore();
+const db   = firebase.firestore();
 
 // ===== STATE =====
-let rates = { USD: null, EUR: null, SAR: null };
+let rates    = { USD: null, EUR: null, SAR: null };
 let goldPrices = { g24: null, g21: null };
-let assets = null;
+let assets   = null;
 let nisabReachedDate = null;
 let currentUser = null;
 const NISAB_GRAMS_24 = 85;
 
-// ===== AUTH UI =====
+// ===== AUTH HELPERS =====
 window.switchAuthTab = function(tab) {
-  document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
-  document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
-  document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
-  document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+  document.getElementById('loginForm').style.display    = tab==='login'    ? 'block' : 'none';
+  document.getElementById('registerForm').style.display = tab==='register' ? 'block' : 'none';
+  document.getElementById('tabLogin').classList.toggle('active', tab==='login');
+  document.getElementById('tabRegister').classList.toggle('active', tab==='register');
   document.getElementById('authErr').textContent = '';
 };
 
-function authErr(msg) { document.getElementById('authErr').textContent = msg; }
-
 function arabicAuthError(code) {
-  const map = {
-    'auth/email-already-in-use': 'البريد مستخدم بالفعل',
-    'auth/weak-password': 'كلمة المرور ضعيفة (6 أحرف على الأقل)',
-    'auth/invalid-email': 'البريد الإلكتروني غير صحيح',
-    'auth/user-not-found': 'البريد أو كلمة المرور غلط',
-    'auth/wrong-password': 'البريد أو كلمة المرور غلط',
-    'auth/invalid-credential': 'البريد أو كلمة المرور غلط',
-    'auth/too-many-requests': 'محاولات كثيرة، حاول بعد قليل',
-    'auth/network-request-failed': 'تحقق من الإنترنت',
+  const m = {
+    'auth/email-already-in-use':'البريد مستخدم بالفعل',
+    'auth/weak-password':'كلمة المرور ضعيفة (6 أحرف على الأقل)',
+    'auth/invalid-email':'البريد الإلكتروني غير صحيح',
+    'auth/user-not-found':'البريد أو كلمة المرور غلط',
+    'auth/wrong-password':'البريد أو كلمة المرور غلط',
+    'auth/invalid-credential':'البريد أو كلمة المرور غلط',
+    'auth/too-many-requests':'محاولات كثيرة، حاول بعد قليل',
+    'auth/network-request-failed':'تحقق من الإنترنت',
   };
-  return map[code] || 'حدث خطأ، حاول مجدداً';
+  return m[code] || 'حدث خطأ، حاول مجدداً';
 }
 
 window.doLogin = async function() {
   const email = document.getElementById('loginEmail').value.trim();
   const pass  = document.getElementById('loginPass').value;
-  if (!email || !pass) { authErr('أدخل البريد وكلمة المرور'); return; }
-  authErr('');
+  if (!email || !pass) { document.getElementById('authErr').textContent='أدخل البريد وكلمة المرور'; return; }
+  document.getElementById('authErr').textContent = '';
   try { await auth.signInWithEmailAndPassword(email, pass); }
-  catch(e) { authErr(arabicAuthError(e.code)); }
+  catch(e) { document.getElementById('authErr').textContent = arabicAuthError(e.code); }
 };
 
 window.doRegister = async function() {
   const email = document.getElementById('regEmail').value.trim();
   const pass  = document.getElementById('regPass').value;
   const pass2 = document.getElementById('regPass2').value;
-  if (!email || !pass) { authErr('أدخل البريد وكلمة المرور'); return; }
-  if (pass !== pass2)  { authErr('كلمتا المرور غير متطابقتين'); return; }
-  if (pass.length < 6) { authErr('كلمة المرور 6 أحرف على الأقل'); return; }
-  authErr('');
+  if (!email||!pass) { document.getElementById('authErr').textContent='أدخل البريد وكلمة المرور'; return; }
+  if (pass!==pass2)  { document.getElementById('authErr').textContent='كلمتا المرور غير متطابقتين'; return; }
+  if (pass.length<6) { document.getElementById('authErr').textContent='كلمة المرور 6 أحرف على الأقل'; return; }
+  document.getElementById('authErr').textContent = '';
   try { await auth.createUserWithEmailAndPassword(email, pass); }
-  catch(e) { authErr(arabicAuthError(e.code)); }
+  catch(e) { document.getElementById('authErr').textContent = arabicAuthError(e.code); }
 };
 
 window.doLogout = async function() { await auth.signOut(); };
 
-// ===== AUTH STATE =====
-auth.onAuthStateChanged(async (user) => {
+window.handleAuthBtn = function() {
+  if (currentUser) doLogout();
+  else document.getElementById('authOverlay').style.display = 'flex';
+};
+window.closeAuthModal = function() {
+  document.getElementById('authOverlay').style.display = 'none';
+};
+
+// ===== AUTH STATE LISTENER =====
+auth.onAuthStateChanged(async function(user) {
   document.getElementById('splashScreen').style.display = 'none';
   if (user) {
     currentUser = user;
@@ -396,14 +402,7 @@ auth.onAuthStateChanged(async (user) => {
   fetchRates();
 });
 
-window.handleAuthBtn = function() {
-  if (currentUser) doLogout();
-  else openAuthModal();
-};
-window.openAuthModal  = function() { document.getElementById('authOverlay').style.display = 'flex'; };
-window.closeAuthModal = function() { document.getElementById('authOverlay').style.display = 'none'; };
-
-// ===== LOCAL STORAGE (guests) =====
+// ===== LOCAL STORAGE =====
 function loadLocalData() {
   try {
     const a = localStorage.getItem('zakat_assets');
@@ -424,7 +423,7 @@ function saveLocalData() {
 async function loadUserData() {
   if (!currentUser) return;
   setSyncing(true);
-  const statusEl = document.getElementById('saveStatus');
+  const st = document.getElementById('saveStatus');
   try {
     const snap = await db.collection('users').doc(currentUser.uid).get();
     if (snap.exists) {
@@ -432,21 +431,18 @@ async function loadUserData() {
       if (data.assets && typeof data.assets === 'object') {
         assets = data.assets;
       } else if (data.g24 !== undefined) {
-        assets = { g24: data.g24||0, g21: data.g21||0, sar: data.sar||0,
-                   usd: data.usd||0, eur: data.eur||0, egp: data.egp||0,
-                   savedAt: data.savedAt || new Date().toISOString() };
+        assets = { g24:data.g24||0, g21:data.g21||0, sar:data.sar||0,
+                   usd:data.usd||0, eur:data.eur||0, egp:data.egp||0,
+                   savedAt:data.savedAt||new Date().toISOString() };
       } else { assets = null; }
       nisabReachedDate = data.nisabReachedDate || null;
-      if (statusEl) {
-        statusEl.textContent = assets ? '✓ تم تحميل بياناتك من السحابة' : 'لا توجد بيانات محفوظة بعد';
-        setTimeout(() => { statusEl.textContent = ''; }, 3000);
-      }
+      if (st) { st.textContent = assets ? '✓ تم تحميل بياناتك من السحابة' : 'لا توجد بيانات محفوظة بعد'; setTimeout(()=>{st.textContent='';},3000); }
     } else {
-      if (statusEl) { statusEl.textContent = 'لا توجد بيانات محفوظة بعد'; setTimeout(() => { statusEl.textContent = ''; }, 3000); }
+      if (st) { st.textContent = 'لا توجد بيانات محفوظة بعد'; setTimeout(()=>{st.textContent='';},3000); }
     }
   } catch(e) {
     console.error('loadUserData:', e);
-    if (statusEl) statusEl.textContent = 'خطأ في تحميل البيانات: ' + (e.code || e.message);
+    if (st) st.textContent = 'خطأ في تحميل البيانات: ' + (e.code||e.message||'unknown');
   }
   setSyncing(false);
 }
@@ -454,21 +450,19 @@ async function loadUserData() {
 async function saveUserData() {
   if (!currentUser || !assets) return;
   setSyncing(true);
-  const statusEl = document.getElementById('saveStatus');
+  const st = document.getElementById('saveStatus');
   try {
-    const payload = {
-      assets: { ...assets },
+    await db.collection('users').doc(currentUser.uid).set({
+      assets: {...assets},
       nisabReachedDate: nisabReachedDate || null,
-      g24: assets.g24||0, g21: assets.g21||0,
-      sar: assets.sar||0, usd: assets.usd||0,
-      eur: assets.eur||0, egp: assets.egp||0,
-      savedAt: assets.savedAt, lastSaved: new Date().toISOString()
-    };
-    await db.collection('users').doc(currentUser.uid).set(payload, { merge: true });
-    console.log('Firestore save OK');
+      g24:assets.g24||0, g21:assets.g21||0,
+      sar:assets.sar||0, usd:assets.usd||0,
+      eur:assets.eur||0, egp:assets.egp||0,
+      savedAt:assets.savedAt, lastSaved:new Date().toISOString()
+    }, { merge: true });
   } catch(e) {
     console.error('saveUserData:', e);
-    if (statusEl) statusEl.textContent = 'فشل الحفظ: ' + (e.code || e.message);
+    if (st) st.textContent = 'فشل الحفظ: ' + (e.code||e.message||'تحقق من الإنترنت');
   }
   setSyncing(false);
 }
@@ -478,73 +472,74 @@ function setSyncing(on) {
   if (dot) dot.className = 'sync-indicator' + (on ? ' syncing' : '');
 }
 
-// ===== FETCH RATES =====
+// ===== RATES & GOLD =====
 window.fetchRates = async function() {
   document.getElementById('goldStatus').textContent = 'جاري التحديث...';
+  // Exchange rates
   let gotRates = false;
   try {
     const r = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json');
     const d = await r.json();
-    const usd = d.usd;
-    if (usd && usd.egp) {
-      rates.USD = usd.egp; rates.EUR = usd.egp / usd.eur; rates.SAR = usd.egp / usd.sar;
+    if (d.usd && d.usd.egp) {
+      rates.USD = d.usd.egp; rates.EUR = d.usd.egp/d.usd.eur; rates.SAR = d.usd.egp/d.usd.sar;
       gotRates = true; document.getElementById('ratesStatus').textContent = ''; updateRatesUI();
     }
   } catch(e) {}
   if (!gotRates) {
     try {
-      const r2 = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-      const d2 = await r2.json();
-      if (d2?.rates?.EGP) {
-        rates.USD = d2.rates.EGP; rates.EUR = d2.rates.EGP / d2.rates.EUR; rates.SAR = d2.rates.EGP / d2.rates.SAR;
+      const r = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+      const d = await r.json();
+      if (d.rates && d.rates.EGP) {
+        rates.USD = d.rates.EGP; rates.EUR = d.rates.EGP/d.rates.EUR; rates.SAR = d.rates.EGP/d.rates.SAR;
         gotRates = true; updateRatesUI();
       }
     } catch(e) {}
   }
   if (!gotRates) {
-    rates.USD = 50.5; rates.EUR = 55.8; rates.SAR = 13.5;
+    rates.USD=50.5; rates.EUR=55.8; rates.SAR=13.5;
     document.getElementById('ratesStatus').textContent = 'أسعار عملات تقريبية'; updateRatesUI();
   }
+  // Gold price
   let gotGold = false;
   try {
-    const r3 = await fetch('https://api.gold-api.com/price/XAU');
-    const d3 = await r3.json();
-    if (d3?.price) {
-      goldPrices.g24 = (parseFloat(d3.price) / 31.1035) * rates.USD;
-      goldPrices.g21 = goldPrices.g24 * (21/24);
+    const r = await fetch('https://api.gold-api.com/price/XAU');
+    const d = await r.json();
+    if (d && d.price) {
+      goldPrices.g24 = (parseFloat(d.price)/31.1035)*rates.USD;
+      goldPrices.g21 = goldPrices.g24*(21/24);
       gotGold = true; document.getElementById('goldStatus').textContent = '';
     }
   } catch(e) {}
   if (!gotGold) {
     try {
-      const r4 = await fetch('https://api.metals.live/v1/spot/gold');
-      const d4 = await r4.json();
-      const oz = Array.isArray(d4) ? d4[0]?.gold : d4?.price;
+      const r = await fetch('https://api.metals.live/v1/spot/gold');
+      const d = await r.json();
+      const oz = Array.isArray(d) ? d[0]?.gold : d?.price;
       if (oz) {
-        goldPrices.g24 = (parseFloat(oz) / 31.1035) * rates.USD;
-        goldPrices.g21 = goldPrices.g24 * (21/24);
+        goldPrices.g24 = (parseFloat(oz)/31.1035)*rates.USD;
+        goldPrices.g21 = goldPrices.g24*(21/24);
         gotGold = true; document.getElementById('goldStatus').textContent = '';
       }
     } catch(e) {}
   }
-  if (!gotGold) { goldPrices.g24 = 6691; goldPrices.g21 = 5855; document.getElementById('goldStatus').textContent = 'سعر تقريبي'; }
+  if (!gotGold) { goldPrices.g24=6691; goldPrices.g21=5855; document.getElementById('goldStatus').textContent='سعر تقريبي'; }
   updateGoldUI();
   if (assets) { updateSummary(); updateZakat(); }
   document.getElementById('lastUpdate').textContent = 'آخر تحديث: ' + new Date().toLocaleTimeString('ar-EG');
 };
 
 function updateRatesUI() {
-  document.getElementById('rUSD').textContent = rates.USD?.toFixed(2) || '--';
-  document.getElementById('rEUR').textContent = rates.EUR?.toFixed(2) || '--';
-  document.getElementById('rSAR').textContent = rates.SAR?.toFixed(2) || '--';
-  document.getElementById('phUSD').textContent = rates.USD?.toFixed(1) || '--';
-  document.getElementById('phEUR').textContent = rates.EUR?.toFixed(1) || '--';
+  document.getElementById('rUSD').textContent  = rates.USD ? rates.USD.toFixed(2)  : '--';
+  document.getElementById('rEUR').textContent  = rates.EUR ? rates.EUR.toFixed(2)  : '--';
+  document.getElementById('rSAR').textContent  = rates.SAR ? rates.SAR.toFixed(2)  : '--';
+  document.getElementById('phUSD').textContent = rates.USD ? rates.USD.toFixed(1)  : '--';
+  document.getElementById('phEUR').textContent = rates.EUR ? rates.EUR.toFixed(1)  : '--';
 }
 function updateGoldUI() {
-  document.getElementById('g24price').textContent = goldPrices.g24?.toFixed(0) || '--';
-  document.getElementById('g21price').textContent = goldPrices.g21?.toFixed(0) || '--';
-  document.getElementById('ph24').textContent = goldPrices.g24?.toFixed(0) || '--';
-  document.getElementById('ph21').textContent = goldPrices.g21?.toFixed(0) || '--';
+  document.getElementById('g24price').textContent = goldPrices.g24 ? goldPrices.g24.toFixed(0) : '--';
+  document.getElementById('g21price').textContent = goldPrices.g21 ? goldPrices.g21.toFixed(0) : '--';
+  document.getElementById('ph24').textContent     = goldPrices.g24 ? goldPrices.g24.toFixed(0) : '--';
+  document.getElementById('ph21').textContent     = goldPrices.g21 ? goldPrices.g21.toFixed(0) : '--';
 }
 
 // ===== ASSETS =====
@@ -552,12 +547,12 @@ window.saveAssets = async function() {
   const btn = document.getElementById('saveBtn');
   btn.disabled = true; btn.textContent = 'جاري الحفظ...';
   assets = {
-    g24: parseFloat(document.getElementById('g24').value) || 0,
-    g21: parseFloat(document.getElementById('g21').value) || 0,
-    sar: parseFloat(document.getElementById('sar').value) || 0,
-    usd: parseFloat(document.getElementById('usd').value) || 0,
-    eur: parseFloat(document.getElementById('eur').value) || 0,
-    egp: parseFloat(document.getElementById('egp').value) || 0,
+    g24: parseFloat(document.getElementById('g24').value)||0,
+    g21: parseFloat(document.getElementById('g21').value)||0,
+    sar: parseFloat(document.getElementById('sar').value)||0,
+    usd: parseFloat(document.getElementById('usd').value)||0,
+    eur: parseFloat(document.getElementById('eur').value)||0,
+    egp: parseFloat(document.getElementById('egp').value)||0,
     savedAt: new Date().toISOString()
   };
   checkNisabDate();
@@ -570,7 +565,7 @@ window.saveAssets = async function() {
   }
   updateSummary(); updateZakat();
   btn.disabled = false; btn.textContent = '💾 حفظ وحساب';
-  setTimeout(() => { document.getElementById('saveStatus').textContent = ''; }, 3000);
+  setTimeout(()=>{ document.getElementById('saveStatus').textContent=''; }, 3000);
 };
 
 function fillInputs() {
@@ -582,7 +577,7 @@ function fillInputs() {
 
 function checkNisabDate() {
   if (!assets) return;
-  const total24 = (assets.g24||0) + ((assets.g21||0) * 21/24);
+  const total24 = (assets.g24||0) + ((assets.g21||0)*21/24);
   if (total24 >= NISAB_GRAMS_24) { if (!nisabReachedDate) nisabReachedDate = new Date().toISOString(); }
   else { nisabReachedDate = null; }
 }
@@ -591,17 +586,17 @@ function calcTotals() {
   if (!assets) return null;
   const goldEGP = (assets.g24||0)*(goldPrices.g24||0) + (assets.g21||0)*(goldPrices.g21||0);
   const cashEGP = (assets.sar||0)*(rates.SAR||13.5) + (assets.usd||0)*(rates.USD||50.5) + (assets.eur||0)*(rates.EUR||55.8) + (assets.egp||0);
-  return { goldEGP, cashEGP, total: goldEGP + cashEGP };
+  return { goldEGP, cashEGP, total: goldEGP+cashEGP };
 }
 
 function updateSummary() {
   if (!assets) return;
   const t = calcTotals();
-  document.getElementById('s24').textContent = (assets.g24||0).toFixed(2);
-  document.getElementById('s21').textContent = (assets.g21||0).toFixed(2);
+  document.getElementById('s24').textContent      = (assets.g24||0).toFixed(2);
+  document.getElementById('s21').textContent      = (assets.g21||0).toFixed(2);
   document.getElementById('sGoldEGP').textContent = Math.round(t.goldEGP).toLocaleString('ar-EG');
   document.getElementById('sCashEGP').textContent = Math.round(t.cashEGP).toLocaleString('ar-EG');
-  document.getElementById('sTotalEGP').textContent = Math.round(t.total).toLocaleString('ar-EG');
+  document.getElementById('sTotalEGP').textContent= Math.round(t.total).toLocaleString('ar-EG');
   document.getElementById('summaryCard').style.display = 'block';
   const d = new Date(assets.savedAt);
   document.getElementById('savedTime').textContent = 'آخر تعديل: ' + d.toLocaleDateString('ar-EG') + ' ' + d.toLocaleTimeString('ar-EG');
@@ -610,39 +605,37 @@ function updateSummary() {
 function updateZakat() {
   if (!assets) return;
   const t = calcTotals();
-  const total24 = (assets.g24||0) + ((assets.g21||0) * 21/24);
+  const total24  = (assets.g24||0) + ((assets.g21||0)*21/24);
   const nisabEGP = NISAB_GRAMS_24 * (goldPrices.g24||0);
   const isEligible = total24 >= NISAB_GRAMS_24;
-  const zakatAmt = isEligible ? t.total * 0.025 : 0;
-  const pct = Math.min((total24 / NISAB_GRAMS_24) * 100, 100);
+  const zakatAmt   = isEligible ? t.total*0.025 : 0;
+  const pct = Math.min((total24/NISAB_GRAMS_24)*100, 100);
   let html = '';
   if (isEligible) {
     const dateStr = nisabReachedDate
-      ? new Date(nisabReachedDate).toLocaleDateString('ar-EG', {year:'numeric',month:'long',day:'numeric'})
+      ? new Date(nisabReachedDate).toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'})
       : 'منذ آخر حفظ';
-    html += `<div class="zakat-card eligible">
-      <div class="zakat-badge badge-yes">✓ بلغت النصاب</div>
-      <div class="zakat-title yes">أنت مستحق للزكاة</div>
-      <div class="zakat-sub">بلغت النصاب منذ: ${dateStr}</div>
-      <div class="zakat-sub">معادل ذهبك عيار 24: <strong>${total24.toFixed(2)} جرام</strong> (النصاب: ${NISAB_GRAMS_24} جرام)</div>
-      <div class="zakat-amount-row">
-        <div class="zakat-amount-label">مقدار الزكاة (2.5%)</div>
-        <div class="zakat-amount-val">${Math.round(zakatAmt).toLocaleString('ar-EG')}</div>
-        <div class="zakat-amount-unit">جنيه مصري</div>
-      </div></div>`;
+    html += '<div class="zakat-card eligible">'
+          + '<div class="zakat-badge badge-yes">✓ بلغت النصاب</div>'
+          + '<div class="zakat-title yes">أنت مستحق للزكاة</div>'
+          + '<div class="zakat-sub">بلغت النصاب منذ: ' + dateStr + '</div>'
+          + '<div class="zakat-sub">معادل ذهبك عيار 24: <strong>' + total24.toFixed(2) + ' جرام</strong> (النصاب: ' + NISAB_GRAMS_24 + ' جرام)</div>'
+          + '<div class="zakat-amount-row"><div class="zakat-amount-label">مقدار الزكاة (2.5%)</div>'
+          + '<div class="zakat-amount-val">' + Math.round(zakatAmt).toLocaleString('ar-EG') + '</div>'
+          + '<div class="zakat-amount-unit">جنيه مصري</div></div></div>';
   } else {
-    html += `<div class="zakat-card not-eligible">
-      <div class="zakat-badge badge-no">✗ لم تبلغ النصاب</div>
-      <div class="zakat-title no">لست مستحقاً للزكاة حالياً</div>
-      <div class="zakat-sub">معادل ذهبك عيار 24: ${total24.toFixed(2)} جرام</div>
-      <div class="zakat-sub">متبقي للنصاب: ${(NISAB_GRAMS_24 - total24).toFixed(2)} جرام</div></div>`;
+    html += '<div class="zakat-card not-eligible">'
+          + '<div class="zakat-badge badge-no">✗ لم تبلغ النصاب</div>'
+          + '<div class="zakat-title no">لست مستحقاً للزكاة حالياً</div>'
+          + '<div class="zakat-sub">معادل ذهبك عيار 24: ' + total24.toFixed(2) + ' جرام</div>'
+          + '<div class="zakat-sub">متبقي للنصاب: ' + (NISAB_GRAMS_24-total24).toFixed(2) + ' جرام</div></div>';
   }
-  html += `<div class="nisab-bar-wrap">
-    <div class="nisab-bar-label"><span>تقدمك نحو النصاب</span><span>${pct.toFixed(1)}%</span></div>
-    <div class="nisab-bar-track"><div class="nisab-bar-fill ${isEligible?'bar-fill-yes':'bar-fill-no'}" style="width:${pct}%"></div></div></div>`;
+  html += '<div class="nisab-bar-wrap">'
+        + '<div class="nisab-bar-label"><span>تقدمك نحو النصاب</span><span>' + pct.toFixed(1) + '%</span></div>'
+        + '<div class="nisab-bar-track"><div class="nisab-bar-fill ' + (isEligible?'bar-fill-yes':'bar-fill-no') + '" style="width:' + pct + '%"></div></div></div>';
   if (nisabEGP) {
-    html += `<div style="font-size:11px;color:var(--text-hint);text-align:center;margin-top:10px;padding:6px;background:var(--gold-bg2);border-radius:var(--radius-sm);border:1px solid var(--border)">
-      قيمة النصاب الحالية: ${Math.round(nisabEGP).toLocaleString('ar-EG')} جنيه</div>`;
+    html += '<div style="font-size:11px;color:var(--text-hint);text-align:center;margin-top:10px;padding:6px;background:var(--gold-bg2);border-radius:var(--radius-sm);border:1px solid var(--border)">'
+          + 'قيمة النصاب الحالية: ' + Math.round(nisabEGP).toLocaleString('ar-EG') + ' جنيه</div>';
   }
   document.getElementById('zakatContent').innerHTML = html;
 }
@@ -651,7 +644,10 @@ function updateZakat() {
 window.showTab = function(name, el) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
   el.classList.add('active');
 };
+
 </script>
+</body>
+</html>
