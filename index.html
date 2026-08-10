@@ -302,14 +302,12 @@
 </div>
 
 <!-- Firebase SDK -->
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged }
-  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, doc, setDoc, getDoc }
-  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-
-// ===== FIREBASE CONFIG =====
+<!-- Firebase compat SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+// ===== FIREBASE INIT =====
 const firebaseConfig = {
   apiKey: "AIzaSyAP6cb9HerGIdvaKqJtEZF4a4HVS4PpVqc",
   authDomain: "zakah-89cd7.firebaseapp.com",
@@ -318,10 +316,9 @@ const firebaseConfig = {
   messagingSenderId: "764011796925",
   appId: "1:764011796925:web:2a61add92f1d79ddb29ad4"
 };
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
 // ===== STATE =====
 let rates = { USD: null, EUR: null, SAR: null };
@@ -358,49 +355,41 @@ function arabicAuthError(code) {
 
 window.doLogin = async function() {
   const email = document.getElementById('loginEmail').value.trim();
-  const pass = document.getElementById('loginPass').value;
+  const pass  = document.getElementById('loginPass').value;
   if (!email || !pass) { authErr('أدخل البريد وكلمة المرور'); return; }
   authErr('');
-  try {
-    await signInWithEmailAndPassword(auth, email, pass);
-  } catch(e) { authErr(arabicAuthError(e.code)); }
+  try { await auth.signInWithEmailAndPassword(email, pass); }
+  catch(e) { authErr(arabicAuthError(e.code)); }
 };
 
 window.doRegister = async function() {
   const email = document.getElementById('regEmail').value.trim();
-  const pass = document.getElementById('regPass').value;
+  const pass  = document.getElementById('regPass').value;
   const pass2 = document.getElementById('regPass2').value;
   if (!email || !pass) { authErr('أدخل البريد وكلمة المرور'); return; }
-  if (pass !== pass2) { authErr('كلمتا المرور غير متطابقتين'); return; }
+  if (pass !== pass2)  { authErr('كلمتا المرور غير متطابقتين'); return; }
   if (pass.length < 6) { authErr('كلمة المرور 6 أحرف على الأقل'); return; }
   authErr('');
-  try {
-    await createUserWithEmailAndPassword(auth, email, pass);
-  } catch(e) { authErr(arabicAuthError(e.code)); }
+  try { await auth.createUserWithEmailAndPassword(email, pass); }
+  catch(e) { authErr(arabicAuthError(e.code)); }
 };
 
-window.doLogout = async function() {
-  await signOut(auth);
-  // After logout keep showing app with local data
-};
+window.doLogout = async function() { await auth.signOut(); };
 
 // ===== AUTH STATE =====
-onAuthStateChanged(auth, async (user) => {
+auth.onAuthStateChanged(async (user) => {
   document.getElementById('splashScreen').style.display = 'none';
   if (user) {
     currentUser = user;
     document.getElementById('authOverlay').style.display = 'none';
     document.getElementById('userEmail').textContent = user.email;
     document.getElementById('authBtn').textContent = 'خروج';
-    // Load cloud data (merges over local if exists)
     await loadUserData();
-    updateRatesUI(); updateGoldUI();
     if (assets) { fillInputs(); updateSummary(); updateZakat(); }
   } else {
     currentUser = null;
     document.getElementById('userEmail').textContent = 'زائر — بياناتك محفوظة محلياً';
     document.getElementById('authBtn').textContent = 'دخول';
-    // Load from localStorage for guests
     loadLocalData();
     if (assets) { fillInputs(); updateSummary(); updateZakat(); }
   }
@@ -408,20 +397,11 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 window.handleAuthBtn = function() {
-  if (currentUser) {
-    doLogout();
-  } else {
-    openAuthModal();
-  }
+  if (currentUser) doLogout();
+  else openAuthModal();
 };
-
-window.openAuthModal = function() {
-  document.getElementById('authOverlay').style.display = 'flex';
-};
-
-window.closeAuthModal = function() {
-  document.getElementById('authOverlay').style.display = 'none';
-};
+window.openAuthModal  = function() { document.getElementById('authOverlay').style.display = 'flex'; };
+window.closeAuthModal = function() { document.getElementById('authOverlay').style.display = 'none'; };
 
 // ===== LOCAL STORAGE (guests) =====
 function loadLocalData() {
@@ -432,7 +412,6 @@ function loadLocalData() {
     if (d) nisabReachedDate = d;
   } catch(e) {}
 }
-
 function saveLocalData() {
   try {
     if (assets) localStorage.setItem('zakat_assets', JSON.stringify(assets));
@@ -447,31 +426,27 @@ async function loadUserData() {
   setSyncing(true);
   const statusEl = document.getElementById('saveStatus');
   try {
-    const ref = doc(db, 'users', currentUser.uid);
-    const snap = await getDoc(ref);
-    if (snap.exists()) {
+    const snap = await db.collection('users').doc(currentUser.uid).get();
+    if (snap.exists) {
       const data = snap.data();
-      // Support nested format {assets:{...}} and flat format {g24:..., g21:...}
       if (data.assets && typeof data.assets === 'object') {
         assets = data.assets;
       } else if (data.g24 !== undefined) {
-        assets = { g24: data.g24||0, g21: data.g21||0, sar: data.sar||0, usd: data.usd||0, eur: data.eur||0, egp: data.egp||0, savedAt: data.savedAt || new Date().toISOString() };
-      } else {
-        assets = null;
-      }
+        assets = { g24: data.g24||0, g21: data.g21||0, sar: data.sar||0,
+                   usd: data.usd||0, eur: data.eur||0, egp: data.egp||0,
+                   savedAt: data.savedAt || new Date().toISOString() };
+      } else { assets = null; }
       nisabReachedDate = data.nisabReachedDate || null;
-      if (assets) {
-        fillInputs(); updateSummary(); updateZakat();
-        if (statusEl) { statusEl.textContent = '✓ تم تحميل بياناتك من السحابة'; setTimeout(()=>{ statusEl.textContent=''; },3000); }
-      } else {
-        if (statusEl) { statusEl.textContent = 'لا توجد بيانات محفوظة بعد'; setTimeout(()=>{ statusEl.textContent=''; },3000); }
+      if (statusEl) {
+        statusEl.textContent = assets ? '✓ تم تحميل بياناتك من السحابة' : 'لا توجد بيانات محفوظة بعد';
+        setTimeout(() => { statusEl.textContent = ''; }, 3000);
       }
     } else {
-      if (statusEl) { statusEl.textContent = 'لا توجد بيانات محفوظة بعد'; setTimeout(()=>{ statusEl.textContent=''; },3000); }
+      if (statusEl) { statusEl.textContent = 'لا توجد بيانات محفوظة بعد'; setTimeout(() => { statusEl.textContent = ''; }, 3000); }
     }
   } catch(e) {
-    console.error('loadUserData error:', e);
-    if (statusEl) statusEl.textContent = 'خطأ في تحميل البيانات: ' + (e.code || e.message || 'unknown');
+    console.error('loadUserData:', e);
+    if (statusEl) statusEl.textContent = 'خطأ في تحميل البيانات: ' + (e.code || e.message);
   }
   setSyncing(false);
 }
@@ -481,8 +456,6 @@ async function saveUserData() {
   setSyncing(true);
   const statusEl = document.getElementById('saveStatus');
   try {
-    const ref = doc(db, 'users', currentUser.uid);
-    // Save both nested (assets:{}) and flat fields as backup
     const payload = {
       assets: { ...assets },
       nisabReachedDate: nisabReachedDate || null,
@@ -491,14 +464,11 @@ async function saveUserData() {
       eur: assets.eur||0, egp: assets.egp||0,
       savedAt: assets.savedAt, lastSaved: new Date().toISOString()
     };
-    await setDoc(ref, payload, { merge: true });
-    // Verify
-    const verify = await getDoc(ref);
-    if (!verify.exists()) throw new Error('document not found after save');
-    console.log('Firestore save verified:', verify.data());
+    await db.collection('users').doc(currentUser.uid).set(payload, { merge: true });
+    console.log('Firestore save OK');
   } catch(e) {
-    console.error('saveUserData error:', e);
-    if (statusEl) statusEl.textContent = 'فشل الحفظ: ' + (e.code || e.message || 'تحقق من الإنترنت');
+    console.error('saveUserData:', e);
+    if (statusEl) statusEl.textContent = 'فشل الحفظ: ' + (e.code || e.message);
   }
   setSyncing(false);
 }
@@ -508,7 +478,7 @@ function setSyncing(on) {
   if (dot) dot.className = 'sync-indicator' + (on ? ' syncing' : '');
 }
 
-// ===== RATES & GOLD =====
+// ===== FETCH RATES =====
 window.fetchRates = async function() {
   document.getElementById('goldStatus').textContent = 'جاري التحديث...';
   let gotRates = false;
@@ -517,12 +487,8 @@ window.fetchRates = async function() {
     const d = await r.json();
     const usd = d.usd;
     if (usd && usd.egp) {
-      rates.USD = usd.egp;
-      rates.EUR = usd.egp / usd.eur;
-      rates.SAR = usd.egp / usd.sar;
-      gotRates = true;
-      document.getElementById('ratesStatus').textContent = '';
-      updateRatesUI();
+      rates.USD = usd.egp; rates.EUR = usd.egp / usd.eur; rates.SAR = usd.egp / usd.sar;
+      gotRates = true; document.getElementById('ratesStatus').textContent = ''; updateRatesUI();
     }
   } catch(e) {}
   if (!gotRates) {
@@ -530,20 +496,15 @@ window.fetchRates = async function() {
       const r2 = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
       const d2 = await r2.json();
       if (d2?.rates?.EGP) {
-        rates.USD = d2.rates.EGP;
-        rates.EUR = d2.rates.EGP / d2.rates.EUR;
-        rates.SAR = d2.rates.EGP / d2.rates.SAR;
-        gotRates = true;
-        updateRatesUI();
+        rates.USD = d2.rates.EGP; rates.EUR = d2.rates.EGP / d2.rates.EUR; rates.SAR = d2.rates.EGP / d2.rates.SAR;
+        gotRates = true; updateRatesUI();
       }
     } catch(e) {}
   }
   if (!gotRates) {
     rates.USD = 50.5; rates.EUR = 55.8; rates.SAR = 13.5;
-    document.getElementById('ratesStatus').textContent = 'أسعار عملات تقريبية';
-    updateRatesUI();
+    document.getElementById('ratesStatus').textContent = 'أسعار عملات تقريبية'; updateRatesUI();
   }
-
   let gotGold = false;
   try {
     const r3 = await fetch('https://api.gold-api.com/price/XAU');
@@ -551,8 +512,7 @@ window.fetchRates = async function() {
     if (d3?.price) {
       goldPrices.g24 = (parseFloat(d3.price) / 31.1035) * rates.USD;
       goldPrices.g21 = goldPrices.g24 * (21/24);
-      gotGold = true;
-      document.getElementById('goldStatus').textContent = '';
+      gotGold = true; document.getElementById('goldStatus').textContent = '';
     }
   } catch(e) {}
   if (!gotGold) {
@@ -563,16 +523,11 @@ window.fetchRates = async function() {
       if (oz) {
         goldPrices.g24 = (parseFloat(oz) / 31.1035) * rates.USD;
         goldPrices.g21 = goldPrices.g24 * (21/24);
-        gotGold = true;
-        document.getElementById('goldStatus').textContent = '';
+        gotGold = true; document.getElementById('goldStatus').textContent = '';
       }
     } catch(e) {}
   }
-  if (!gotGold) {
-    goldPrices.g24 = 6691; goldPrices.g21 = 5855;
-    document.getElementById('goldStatus').textContent = 'سعر تقريبي (آخر سعر معروف)';
-  }
-
+  if (!gotGold) { goldPrices.g24 = 6691; goldPrices.g21 = 5855; document.getElementById('goldStatus').textContent = 'سعر تقريبي'; }
   updateGoldUI();
   if (assets) { updateSummary(); updateZakat(); }
   document.getElementById('lastUpdate').textContent = 'آخر تحديث: ' + new Date().toLocaleTimeString('ar-EG');
@@ -595,9 +550,7 @@ function updateGoldUI() {
 // ===== ASSETS =====
 window.saveAssets = async function() {
   const btn = document.getElementById('saveBtn');
-  btn.disabled = true;
-  btn.textContent = 'جاري الحفظ...';
-
+  btn.disabled = true; btn.textContent = 'جاري الحفظ...';
   assets = {
     g24: parseFloat(document.getElementById('g24').value) || 0,
     g21: parseFloat(document.getElementById('g21').value) || 0,
@@ -607,7 +560,6 @@ window.saveAssets = async function() {
     egp: parseFloat(document.getElementById('egp').value) || 0,
     savedAt: new Date().toISOString()
   };
-
   checkNisabDate();
   if (currentUser) {
     await saveUserData();
@@ -616,12 +568,9 @@ window.saveAssets = async function() {
     saveLocalData();
     document.getElementById('saveStatus').textContent = '✓ تم الحفظ محلياً — سجّل دخول للحفظ في السحابة';
   }
-  updateSummary();
-  updateZakat();
-
-  btn.disabled = false;
-  btn.textContent = '💾 حفظ وحساب';
-  setTimeout(() => document.getElementById('saveStatus').textContent = '', 3000);
+  updateSummary(); updateZakat();
+  btn.disabled = false; btn.textContent = '💾 حفظ وحساب';
+  setTimeout(() => { document.getElementById('saveStatus').textContent = ''; }, 3000);
 };
 
 function fillInputs() {
@@ -632,13 +581,10 @@ function fillInputs() {
 }
 
 function checkNisabDate() {
-  if (!assets || !goldPrices.g24) return;
-  const total24 = assets.g24 + (assets.g21 * 21/24);
-  if (total24 >= NISAB_GRAMS_24) {
-    if (!nisabReachedDate) nisabReachedDate = new Date().toISOString();
-  } else {
-    nisabReachedDate = null;
-  }
+  if (!assets) return;
+  const total24 = (assets.g24||0) + ((assets.g21||0) * 21/24);
+  if (total24 >= NISAB_GRAMS_24) { if (!nisabReachedDate) nisabReachedDate = new Date().toISOString(); }
+  else { nisabReachedDate = null; }
 }
 
 function calcTotals() {
@@ -669,7 +615,6 @@ function updateZakat() {
   const isEligible = total24 >= NISAB_GRAMS_24;
   const zakatAmt = isEligible ? t.total * 0.025 : 0;
   const pct = Math.min((total24 / NISAB_GRAMS_24) * 100, 100);
-
   let html = '';
   if (isEligible) {
     const dateStr = nisabReachedDate
@@ -684,28 +629,21 @@ function updateZakat() {
         <div class="zakat-amount-label">مقدار الزكاة (2.5%)</div>
         <div class="zakat-amount-val">${Math.round(zakatAmt).toLocaleString('ar-EG')}</div>
         <div class="zakat-amount-unit">جنيه مصري</div>
-      </div>
-    </div>`;
+      </div></div>`;
   } else {
     html += `<div class="zakat-card not-eligible">
       <div class="zakat-badge badge-no">✗ لم تبلغ النصاب</div>
       <div class="zakat-title no">لست مستحقاً للزكاة حالياً</div>
       <div class="zakat-sub">معادل ذهبك عيار 24: ${total24.toFixed(2)} جرام</div>
-      <div class="zakat-sub">متبقي للنصاب: ${(NISAB_GRAMS_24 - total24).toFixed(2)} جرام</div>
-    </div>`;
+      <div class="zakat-sub">متبقي للنصاب: ${(NISAB_GRAMS_24 - total24).toFixed(2)} جرام</div></div>`;
   }
-
   html += `<div class="nisab-bar-wrap">
     <div class="nisab-bar-label"><span>تقدمك نحو النصاب</span><span>${pct.toFixed(1)}%</span></div>
-    <div class="nisab-bar-track"><div class="nisab-bar-fill ${isEligible?'bar-fill-yes':'bar-fill-no'}" style="width:${pct}%"></div></div>
-  </div>`;
-
+    <div class="nisab-bar-track"><div class="nisab-bar-fill ${isEligible?'bar-fill-yes':'bar-fill-no'}" style="width:${pct}%"></div></div></div>`;
   if (nisabEGP) {
     html += `<div style="font-size:11px;color:var(--text-hint);text-align:center;margin-top:10px;padding:6px;background:var(--gold-bg2);border-radius:var(--radius-sm);border:1px solid var(--border)">
-      قيمة النصاب الحالية: ${Math.round(nisabEGP).toLocaleString('ar-EG')} جنيه
-    </div>`;
+      قيمة النصاب الحالية: ${Math.round(nisabEGP).toLocaleString('ar-EG')} جنيه</div>`;
   }
-
   document.getElementById('zakatContent').innerHTML = html;
 }
 
@@ -716,7 +654,4 @@ window.showTab = function(name, el) {
   document.getElementById('tab-' + name).classList.add('active');
   el.classList.add('active');
 };
-
 </script>
-</body>
-</html>
