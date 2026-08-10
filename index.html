@@ -5,223 +5,173 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>زكاة</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --gold: #C9941A; --gold-light: #F0C040; --gold-dark: #8B6310;
-    --gold-bg: #FDF8EE; --gold-bg2: #FAF0D0; --card-bg: #FFFDF5;
-    --border: rgba(180,140,40,0.25); --border-strong: rgba(180,140,40,0.5);
-    --text: #2C2008; --text-muted: #7A6020; --text-hint: #B09040;
-    --red: #C0392B; --red-bg: #FDF0EE; --green: #2E7D32; --green-bg: #EFF7EF;
-    --radius: 14px; --radius-sm: 8px;
-  }
-  body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--gold-bg); color: var(--text); min-height: 100vh; max-width: 440px; margin: 0 auto; padding-bottom: 2rem; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --gold: #C9941A; --gold-light: #F0C040; --gold-dark: #8B6310;
+  --gold-bg: #FDF8EE; --gold-bg2: #FAF0D0; --card-bg: #FFFDF5;
+  --border: rgba(180,140,40,0.25); --border-strong: rgba(180,140,40,0.5);
+  --text: #2C2008; --text-muted: #7A6020; --text-hint: #B09040;
+  --red: #C0392B; --red-bg: #FDF0EE; --green: #2E7D32; --green-bg: #EFF7EF;
+  --radius: 14px; --radius-sm: 8px;
+}
+body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--gold-bg); color: var(--text); min-height: 100vh; max-width: 440px; margin: 0 auto; padding-bottom: 2rem; }
 
-  /* AUTH SCREEN */
-  .auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem 1.5rem; background: linear-gradient(160deg, #3D2A00 0%, #6B4800 60%, #3D2A00 100%); }
-  .auth-logo { font-size: 48px; margin-bottom: 8px; }
-  .auth-title { font-size: 28px; font-weight: 700; color: var(--gold-light); letter-spacing: 3px; margin-bottom: 4px; }
-  .auth-sub { font-size: 13px; color: rgba(240,192,64,0.6); margin-bottom: 2rem; }
-  .auth-card { background: var(--card-bg); border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 340px; border: 1px solid var(--border-strong); }
-  .auth-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.25rem; }
-  .auth-tab { flex: 1; padding: 8px 0; text-align: center; font-size: 13px; font-weight: 500; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; }
-  .auth-tab.active { color: var(--gold-dark); border-bottom-color: var(--gold); }
-  .auth-input { width: 100%; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 14px; background: var(--gold-bg); color: var(--text); margin-bottom: 10px; direction: ltr; text-align: right; }
-  .auth-input:focus { outline: none; border-color: var(--gold); background: #fff; }
-  .auth-btn { width: 100%; background: linear-gradient(135deg, #8B6310, #C9941A); color: #fff; border: none; border-radius: var(--radius-sm); padding: 11px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 4px; }
-  .auth-btn:active { opacity: 0.85; }
-  .auth-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .auth-err { font-size: 12px; color: var(--red); text-align: center; margin-top: 8px; min-height: 18px; }
-  .auth-loading { font-size: 12px; color: var(--text-hint); text-align: center; margin-top: 8px; }
+/* AUTH */
+.auth-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:2rem 1.5rem; background:linear-gradient(160deg,#3D2A00 0%,#6B4800 60%,#3D2A00 100%); }
+.auth-logo { font-size:52px; margin-bottom:8px; text-align:center; }
+.auth-title { font-size:28px; font-weight:700; color:var(--gold-light); letter-spacing:3px; margin-bottom:4px; }
+.auth-sub { font-size:13px; color:rgba(240,192,64,0.6); margin-bottom:2rem; }
+.auth-card { background:var(--card-bg); border-radius:var(--radius); padding:1.5rem; width:100%; max-width:340px; border:1px solid var(--border-strong); }
+.auth-tabs { display:flex; border-bottom:1px solid var(--border); margin-bottom:1.25rem; }
+.auth-tab { flex:1; padding:8px 0; text-align:center; font-size:13px; font-weight:500; color:var(--text-muted); cursor:pointer; border-bottom:2px solid transparent; }
+.auth-tab.active { color:var(--gold-dark); border-bottom-color:var(--gold); }
+.auth-input { width:100%; border:1px solid var(--border-strong); border-radius:var(--radius-sm); padding:10px 12px; font-size:14px; background:var(--gold-bg); color:var(--text); margin-bottom:10px; direction:ltr; text-align:right; }
+.auth-input:focus { outline:none; border-color:var(--gold); background:#fff; }
+.auth-btn { width:100%; background:linear-gradient(135deg,#8B6310,#C9941A); color:#fff; border:none; border-radius:var(--radius-sm); padding:11px; font-size:14px; font-weight:600; cursor:pointer; }
+.auth-btn:active { opacity:0.85; }
+.auth-btn:disabled { opacity:0.5; cursor:not-allowed; }
+.auth-err { font-size:12px; color:var(--red); text-align:center; margin-top:8px; min-height:18px; }
+.guest-btn { width:100%; background:transparent; border:1px dashed var(--border-strong); border-radius:var(--radius-sm); padding:9px; font-size:13px; color:var(--text-muted); cursor:pointer; margin-top:8px; }
 
-  /* MAIN APP */
-  .app-screen { display: block; }
-  .header { background: linear-gradient(135deg, #3D2A00 0%, #6B4800 50%, #3D2A00 100%); padding: 1.25rem 1.25rem 0.75rem; position: sticky; top: 0; z-index: 100; }
-  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
-  .app-title { font-size: 22px; font-weight: 700; color: var(--gold-light); letter-spacing: 2px; }
-  .app-subtitle { font-size: 10px; color: rgba(240,192,64,0.55); margin-top: 2px; }
-  .header-btns { display: flex; gap: 6px; }
-  .hdr-btn { background: rgba(201,148,26,0.2); border: 1px solid rgba(201,148,26,0.4); color: var(--gold-light); padding: 5px 10px; border-radius: var(--radius-sm); font-size: 11px; cursor: pointer; }
-  .hdr-btn:active { opacity: 0.7; }
-  .prices-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
-  .prices-bar::-webkit-scrollbar { display: none; }
-  .price-pill { background: rgba(255,255,255,0.08); border: 1px solid rgba(240,192,64,0.3); border-radius: 20px; padding: 3px 10px; white-space: nowrap; font-size: 11px; }
-  .price-pill .lbl { color: rgba(240,192,64,0.6); }
-  .price-pill .val { color: var(--gold-light); font-weight: 600; }
+/* APP */
+.app-wrap { display:none; }
+.header { background:linear-gradient(135deg,#3D2A00 0%,#6B4800 50%,#3D2A00 100%); padding:1.1rem 1.25rem 0.6rem; position:sticky; top:0; z-index:100; }
+.header-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.6rem; }
+.app-title { font-size:22px; font-weight:700; color:var(--gold-light); letter-spacing:2px; }
+.user-badge { font-size:10px; color:rgba(240,192,64,0.6); margin-top:2px; }
+.hdr-btns { display:flex; gap:6px; }
+.hdr-btn { background:rgba(201,148,26,0.2); border:1px solid rgba(201,148,26,0.4); color:var(--gold-light); padding:5px 10px; border-radius:var(--radius-sm); font-size:11px; cursor:pointer; }
+.prices-bar { display:flex; gap:8px; overflow-x:auto; padding-bottom:6px; scrollbar-width:none; }
+.prices-bar::-webkit-scrollbar { display:none; }
+.price-pill { background:rgba(255,255,255,0.08); border:1px solid rgba(240,192,64,0.3); border-radius:20px; padding:3px 10px; white-space:nowrap; font-size:11px; }
+.price-pill .lbl { color:rgba(240,192,64,0.6); }
+.price-pill .val { color:var(--gold-light); font-weight:600; }
 
-  .tabs { display: flex; background: var(--gold-bg2); border-bottom: 1px solid var(--border); position: sticky; top: 108px; z-index: 99; }
-  .tab { flex: 1; padding: 10px 0; text-align: center; font-size: 13px; font-weight: 500; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; }
-  .tab.active { color: var(--gold-dark); border-bottom-color: var(--gold); background: var(--gold-bg); }
+.tabs { display:flex; background:var(--gold-bg2); border-bottom:1px solid var(--border); position:sticky; top:102px; z-index:99; }
+.tab { flex:1; padding:10px 0; text-align:center; font-size:13px; font-weight:500; color:var(--text-muted); cursor:pointer; border-bottom:2px solid transparent; }
+.tab.active { color:var(--gold-dark); border-bottom-color:var(--gold); background:var(--gold-bg); }
 
-  .section { display: none; padding: 1rem; }
-  .section.active { display: block; }
+.section { display:none; padding:1rem; }
+.section.active { display:block; }
 
-  .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.1rem; margin-bottom: 1rem; }
-  .card-title { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 6px; }
-  .card-title .dot { width: 6px; height: 6px; background: var(--gold); border-radius: 50%; display: inline-block; }
+.card { background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.1rem; margin-bottom:1rem; }
+.card-title { font-size:13px; font-weight:600; color:var(--text-muted); margin-bottom:.75rem; display:flex; align-items:center; gap:6px; }
+.dot { width:6px; height:6px; background:var(--gold); border-radius:50%; display:inline-block; }
 
-  .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-  .input-group { display: flex; flex-direction: column; gap: 4px; }
-  .input-group label { font-size: 11px; color: var(--text-hint); font-weight: 500; }
-  .input-group input { border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 8px 10px; font-size: 14px; background: var(--gold-bg); color: var(--text); width: 100%; direction: ltr; text-align: right; }
-  .input-group input:focus { outline: none; border-color: var(--gold); background: #fff; }
+.input-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+.input-group { display:flex; flex-direction:column; gap:4px; }
+.input-group label { font-size:11px; color:var(--text-hint); font-weight:500; }
+.input-group input { border:1px solid var(--border-strong); border-radius:var(--radius-sm); padding:8px 10px; font-size:14px; background:var(--gold-bg); color:var(--text); width:100%; direction:ltr; text-align:right; }
+.input-group input:focus { outline:none; border-color:var(--gold); background:#fff; }
 
-  .save-btn { width: 100%; background: linear-gradient(135deg, #8B6310, #C9941A); color: #fff; border: none; border-radius: var(--radius-sm); padding: 11px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 4px; }
-  .save-btn:active { opacity: 0.85; }
-  .save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.save-btn { width:100%; background:linear-gradient(135deg,#8B6310,#C9941A); color:#fff; border:none; border-radius:var(--radius-sm); padding:11px; font-size:14px; font-weight:600; cursor:pointer; margin-top:4px; }
+.save-btn:disabled { opacity:0.5; cursor:not-allowed; }
 
-  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-  .stat-box { background: var(--gold-bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.75rem; text-align: center; }
-  .stat-box .stat-label { font-size: 10px; color: var(--text-hint); margin-bottom: 4px; font-weight: 500; }
-  .stat-box .stat-val { font-size: 18px; font-weight: 700; color: var(--gold-dark); direction: ltr; }
-  .stat-box .stat-unit { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
-  .stat-box.highlight { background: linear-gradient(135deg, #6B4800, #8B6310); border-color: var(--gold); }
-  .stat-box.highlight .stat-label { color: rgba(240,192,64,0.7); }
-  .stat-box.highlight .stat-val { color: var(--gold-light); font-size: 20px; }
-  .stat-box.highlight .stat-unit { color: rgba(240,192,64,0.6); }
+.summary-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+.stat-box { background:var(--gold-bg2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:.75rem; text-align:center; }
+.stat-label { font-size:10px; color:var(--text-hint); margin-bottom:4px; font-weight:500; }
+.stat-val { font-size:18px; font-weight:700; color:var(--gold-dark); direction:ltr; }
+.stat-unit { font-size:10px; color:var(--text-muted); margin-top:2px; }
+.stat-box.hl { background:linear-gradient(135deg,#6B4800,#8B6310); border-color:var(--gold); }
+.stat-box.hl .stat-label { color:rgba(240,192,64,0.7); }
+.stat-box.hl .stat-val { color:var(--gold-light); font-size:20px; }
+.stat-box.hl .stat-unit { color:rgba(240,192,64,0.6); }
 
-  .zakat-card { border-radius: var(--radius); padding: 1.1rem; margin-bottom: 1rem; }
-  .zakat-card.eligible { background: var(--green-bg); border: 1px solid rgba(46,125,50,0.3); }
-  .zakat-card.not-eligible { background: var(--red-bg); border: 1px solid rgba(192,57,43,0.3); }
-  .zakat-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-bottom: 8px; }
-  .badge-yes { background: rgba(46,125,50,0.15); color: var(--green); }
-  .badge-no { background: rgba(192,57,43,0.12); color: var(--red); }
-  .zakat-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
-  .zakat-title.yes { color: var(--green); }
-  .zakat-title.no { color: var(--red); }
-  .zakat-sub { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
-  .zakat-amount-row { display: flex; align-items: baseline; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(46,125,50,0.2); }
-  .zakat-amount-label { font-size: 12px; color: var(--text-muted); }
-  .zakat-amount-val { font-size: 20px; font-weight: 700; color: var(--green); direction: ltr; }
-  .zakat-amount-unit { font-size: 12px; color: var(--text-muted); }
-  .nisab-bar-wrap { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
-  .nisab-bar-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 5px; }
-  .nisab-bar-track { background: var(--gold-bg2); border-radius: 10px; height: 8px; overflow: hidden; border: 1px solid var(--border); }
-  .nisab-bar-fill { height: 100%; border-radius: 10px; transition: width 0.5s ease; }
-  .bar-fill-yes { background: linear-gradient(90deg, #4CAF50, #2E7D32); }
-  .bar-fill-no { background: linear-gradient(90deg, #E57373, #C0392B); }
+.zakat-card { border-radius:var(--radius); padding:1.1rem; margin-bottom:1rem; }
+.zakat-card.yes { background:var(--green-bg); border:1px solid rgba(46,125,50,0.3); }
+.zakat-card.no  { background:var(--red-bg);   border:1px solid rgba(192,57,43,0.3); }
+.zakat-badge { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; margin-bottom:8px; }
+.badge-y { background:rgba(46,125,50,0.15); color:var(--green); }
+.badge-n { background:rgba(192,57,43,0.12); color:var(--red); }
+.zakat-title { font-size:15px; font-weight:700; margin-bottom:4px; }
+.zakat-title.y { color:var(--green); } .zakat-title.n { color:var(--red); }
+.zakat-sub { font-size:12px; color:var(--text-muted); line-height:1.5; margin-top:3px; }
+.zakat-amt-row { display:flex; align-items:baseline; gap:6px; margin-top:10px; padding-top:10px; border-top:1px solid rgba(46,125,50,0.2); }
+.zakat-amt-lbl { font-size:12px; color:var(--text-muted); }
+.zakat-amt-val { font-size:20px; font-weight:700; color:var(--green); direction:ltr; }
+.zakat-amt-unit { font-size:12px; color:var(--text-muted); }
 
-  .gold-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-  .gold-box { background: linear-gradient(135deg, #FDF0C0, #FAE080); border: 1px solid rgba(180,140,40,0.4); border-radius: var(--radius-sm); padding: 0.75rem; text-align: center; }
-  .gold-box .karat { font-size: 11px; color: var(--gold-dark); font-weight: 600; }
-  .gold-box .gprice { font-size: 17px; font-weight: 700; color: var(--gold-dark); direction: ltr; }
-  .gold-box .g-unit { font-size: 10px; color: var(--text-muted); }
-  .rate-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .rate-box { background: var(--gold-bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.75rem; }
-  .rate-box .flag { font-size: 20px; margin-bottom: 4px; }
-  .rate-box .currency { font-size: 11px; color: var(--text-muted); }
-  .rate-box .rate-val { font-size: 15px; font-weight: 700; color: var(--text); direction: ltr; }
+.bar-wrap { margin-top:10px; padding-top:10px; border-top:1px solid var(--border); }
+.bar-lbl { display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted); margin-bottom:5px; }
+.bar-track { background:var(--gold-bg2); border-radius:10px; height:8px; overflow:hidden; border:1px solid var(--border); }
+.bar-fill { height:100%; border-radius:10px; transition:width .5s ease; }
+.bar-y { background:linear-gradient(90deg,#4CAF50,#2E7D32); }
+.bar-n { background:linear-gradient(90deg,#E57373,#C0392B); }
 
-  .hint-text { font-size: 11px; color: var(--text-hint); text-align: center; margin-top: 4px; }
-  .last-update { font-size: 10px; color: var(--text-hint); text-align: center; margin-top: 4px; }
-  .status-txt { text-align: center; color: var(--text-hint); font-size: 12px; padding: 0.4rem; min-height: 20px; }
-  .user-badge { font-size: 10px; color: rgba(240,192,64,0.7); margin-top: 2px; }
+.gold-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+.gold-box { background:linear-gradient(135deg,#FDF0C0,#FAE080); border:1px solid rgba(180,140,40,0.4); border-radius:var(--radius-sm); padding:.75rem; text-align:center; }
+.gold-box .karat { font-size:11px; color:var(--gold-dark); font-weight:600; }
+.gold-box .gprice { font-size:17px; font-weight:700; color:var(--gold-dark); direction:ltr; }
+.gold-box .gunit { font-size:10px; color:var(--text-muted); }
 
-  .sync-indicator { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #4CAF50; margin-left: 4px; vertical-align: middle; }
-  .sync-indicator.syncing { background: var(--gold-light); animation: pulse 1s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.rate-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.rate-box { background:var(--gold-bg2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:.75rem; }
+.rate-box .flag { font-size:20px; margin-bottom:4px; }
+.rate-box .cname { font-size:11px; color:var(--text-muted); }
+.rate-box .rval { font-size:15px; font-weight:700; color:var(--text); direction:ltr; }
 
-  .splash { display:flex; flex-direction:column; align-items:center; justify-content:center; position:fixed; inset:0; z-index:9999; background:linear-gradient(160deg,#3D2A00 0%,#6B4800 60%,#3D2A00 100%); }
-  .splash-logo { font-size:52px; margin-bottom:10px; }
-  .splash-title { font-size:28px; font-weight:700; color:var(--gold-light); letter-spacing:3px; }
-  .splash-dots { margin-top:24px; display:flex; gap:8px; }
-  .splash-dots span { width:8px; height:8px; border-radius:50%; background:var(--gold-light); opacity:0.3; animation:dotPulse 1.2s infinite; }
-  .splash-dots span:nth-child(2) { animation-delay:0.2s; }
-  .splash-dots span:nth-child(3) { animation-delay:0.4s; }
-  @keyframes dotPulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
-  /* Splash hidden by JS only */
+.status-txt { font-size:11px; color:var(--text-hint); text-align:center; margin-top:4px; min-height:16px; }
+.last-upd { font-size:10px; color:var(--text-hint); text-align:center; margin-top:4px; }
+.nisab-note { font-size:11px; color:var(--text-hint); text-align:center; margin-top:10px; padding:6px; background:var(--gold-bg2); border-radius:var(--radius-sm); border:1px solid var(--border); }
+
+.sync { display:inline-block; width:6px; height:6px; border-radius:50%; background:#4CAF50; margin-right:4px; vertical-align:middle; }
+.sync.on { background:var(--gold-light); animation:sp 1s infinite; }
+@keyframes sp { 0%,100%{opacity:1} 50%{opacity:.3} }
 </style>
 </head>
 <body>
 
-<!-- ===== LOADING SPLASH ===== -->
-<div class="splash" id="splashScreen">
-  <div class="splash-logo">⚜</div>
-  <div class="splash-title">زكاة</div>
-  <div class="splash-dots"><span></span><span></span><span></span></div>
-</div>
-
-<!-- ===== AUTH MODAL ===== -->
-<div id="authOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;align-items:center;justify-content:center;padding:1.5rem">
-  <div class="auth-card" style="max-width:340px;width:100%;position:relative">
-    <button onclick="closeAuthModal()" style="position:absolute;top:10px;left:10px;background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted)">✕</button>
-    <div style="text-align:center;margin-bottom:1rem">
-      <div style="font-size:22px;color:var(--gold-dark);font-weight:700">⚜ زكاة</div>
-      <div style="font-size:11px;color:var(--text-hint);margin-top:4px">سجّل لحفظ بياناتك على أي جهاز</div>
-    </div>
-    <div class="auth-tabs">
-      <div class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">تسجيل الدخول</div>
-      <div class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">حساب جديد</div>
-    </div>
-    <div id="loginForm">
-      <input class="auth-input" type="email" id="loginEmail" placeholder="البريد الإلكتروني" autocomplete="email">
-      <input class="auth-input" type="password" id="loginPass" placeholder="كلمة المرور" autocomplete="current-password">
-      <button class="auth-btn" onclick="doLogin()">دخول</button>
-    </div>
-    <div id="registerForm" style="display:none">
-      <input class="auth-input" type="email" id="regEmail" placeholder="البريد الإلكتروني" autocomplete="email">
-      <input class="auth-input" type="password" id="regPass" placeholder="كلمة المرور (6 أحرف على الأقل)" autocomplete="new-password">
-      <input class="auth-input" type="password" id="regPass2" placeholder="تأكيد كلمة المرور" autocomplete="new-password">
-      <button class="auth-btn" onclick="doRegister()">إنشاء حساب</button>
-    </div>
-    <div class="auth-err" id="authErr"></div>
-  </div>
-</div>
-
-<!-- ===== AUTH SCREEN (unused now — kept for compat) ===== -->
-<div class="auth-screen" id="authScreen" style="display:none">
+<!-- AUTH -->
+<div class="auth-wrap" id="authWrap">
   <div class="auth-logo">⚜</div>
   <div class="auth-title">زكاة</div>
-  <div class="auth-sub">تتبع ثروتك ومعرفة زكاتك</div>
-
+  <div class="auth-sub">تتبع ثروتك واحسب زكاتك</div>
   <div class="auth-card">
     <div class="auth-tabs">
-      <div class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">تسجيل الدخول</div>
-      <div class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">حساب جديد</div>
+      <div class="auth-tab active" id="tLogin"  onclick="authTab('login')">دخول</div>
+      <div class="auth-tab"        id="tReg"    onclick="authTab('reg')">حساب جديد</div>
     </div>
-
-    <div id="loginForm">
-      <input class="auth-input" type="email" id="loginEmail" placeholder="البريد الإلكتروني" autocomplete="email">
-      <input class="auth-input" type="password" id="loginPass" placeholder="كلمة المرور" autocomplete="current-password">
-      <button class="auth-btn" onclick="doLogin()">دخول</button>
+    <div id="fLogin">
+      <input class="auth-input" type="email"    id="lEmail" placeholder="البريد الإلكتروني" autocomplete="email">
+      <input class="auth-input" type="password" id="lPass"  placeholder="كلمة المرور" autocomplete="current-password">
+      <button class="auth-btn" id="lBtn" onclick="doLogin()">دخول</button>
     </div>
-
-    <div id="registerForm" style="display:none">
-      <input class="auth-input" type="email" id="regEmail" placeholder="البريد الإلكتروني" autocomplete="email">
-      <input class="auth-input" type="password" id="regPass" placeholder="كلمة المرور (6 أحرف على الأقل)" autocomplete="new-password">
-      <input class="auth-input" type="password" id="regPass2" placeholder="تأكيد كلمة المرور" autocomplete="new-password">
-      <button class="auth-btn" onclick="doRegister()">إنشاء حساب</button>
+    <div id="fReg" style="display:none">
+      <input class="auth-input" type="email"    id="rEmail"  placeholder="البريد الإلكتروني" autocomplete="email">
+      <input class="auth-input" type="password" id="rPass"   placeholder="كلمة المرور (6 أحرف+)" autocomplete="new-password">
+      <input class="auth-input" type="password" id="rPass2"  placeholder="تأكيد كلمة المرور" autocomplete="new-password">
+      <button class="auth-btn" id="rBtn" onclick="doRegister()">إنشاء حساب</button>
     </div>
-
     <div class="auth-err" id="authErr"></div>
+    <button class="guest-btn" onclick="guestMode()">متابعة بدون حساب</button>
   </div>
 </div>
 
-<!-- ===== MAIN APP ===== -->
-<div class="app-screen" id="appScreen">
-
+<!-- APP -->
+<div class="app-wrap" id="appWrap">
   <div class="header">
     <div class="header-top">
       <div>
-        <div class="app-title">⚜ زكاة <span class="sync-indicator" id="syncDot"></span></div>
-        <div class="user-badge" id="userEmail">زائر — بياناتك محفوظة محلياً</div>
+        <div class="app-title">⚜ زكاة <span class="sync" id="syncDot"></span></div>
+        <div class="user-badge" id="userBadge">زائر</div>
       </div>
-      <div class="header-btns">
-        <button class="hdr-btn" onclick="fetchRates()">↻</button>
-        <button class="hdr-btn" id="authBtn" onclick="handleAuthBtn()">دخول</button>
+      <div class="hdr-btns">
+        <button class="hdr-btn" onclick="fetchRates()">↻ تحديث</button>
+        <button class="hdr-btn" id="authBtn" onclick="toggleAuth()">دخول</button>
       </div>
     </div>
     <div class="prices-bar">
       <div class="price-pill"><span class="lbl">24ك </span><span class="val" id="ph24">--</span><span class="lbl"> ج/غ</span></div>
       <div class="price-pill"><span class="lbl">21ك </span><span class="val" id="ph21">--</span><span class="lbl"> ج/غ</span></div>
-      <div class="price-pill"><span class="lbl">$1 = </span><span class="val" id="phUSD">--</span><span class="lbl"> ج</span></div>
-      <div class="price-pill"><span class="lbl">€1 = </span><span class="val" id="phEUR">--</span><span class="lbl"> ج</span></div>
+      <div class="price-pill"><span class="lbl">$= </span><span class="val" id="phUSD">--</span><span class="lbl"> ج</span></div>
+      <div class="price-pill"><span class="lbl">€= </span><span class="val" id="phEUR">--</span><span class="lbl"> ج</span></div>
     </div>
   </div>
 
   <div class="tabs">
     <div class="tab active" onclick="showTab('assets',this)">أصولي</div>
-    <div class="tab" onclick="showTab('prices',this)">الأسعار</div>
-    <div class="tab" onclick="showTab('zakat',this)">الزكاة</div>
+    <div class="tab"        onclick="showTab('prices',this)">الأسعار</div>
+    <div class="tab"        onclick="showTab('zakat',this)">الزكاة</div>
   </div>
 
   <!-- ASSETS -->
@@ -233,12 +183,12 @@
         <div class="input-group"><label>ذهب عيار 21 (جرام)</label><input type="number" id="g21" placeholder="0" min="0" step="0.01"></div>
       </div>
       <div class="input-row">
-        <div class="input-group"><label>ريال سعودي</label><input type="number" id="sar" placeholder="0" min="0" step="0.01"></div>
-        <div class="input-group"><label>دولار أمريكي</label><input type="number" id="usd" placeholder="0" min="0" step="0.01"></div>
+        <div class="input-group"><label>ريال سعودي</label><input type="number" id="iSAR" placeholder="0" min="0"></div>
+        <div class="input-group"><label>دولار أمريكي</label><input type="number" id="iUSD" placeholder="0" min="0"></div>
       </div>
       <div class="input-row">
-        <div class="input-group"><label>يورو</label><input type="number" id="eur" placeholder="0" min="0" step="0.01"></div>
-        <div class="input-group"><label>جنيه مصري</label><input type="number" id="egp" placeholder="0" min="0" step="0.01"></div>
+        <div class="input-group"><label>يورو</label><input type="number" id="iEUR" placeholder="0" min="0"></div>
+        <div class="input-group"><label>جنيه مصري</label><input type="number" id="iEGP" placeholder="0" min="0"></div>
       </div>
       <button class="save-btn" id="saveBtn" onclick="saveAssets()">💾 حفظ وحساب</button>
       <div class="status-txt" id="saveStatus"></div>
@@ -249,36 +199,40 @@
       <div class="summary-grid">
         <div class="stat-box"><div class="stat-label">عيار 24</div><div class="stat-val" id="s24">0</div><div class="stat-unit">جرام</div></div>
         <div class="stat-box"><div class="stat-label">عيار 21</div><div class="stat-val" id="s21">0</div><div class="stat-unit">جرام</div></div>
-        <div class="stat-box"><div class="stat-label">الذهب بالجنيه</div><div class="stat-val" id="sGoldEGP">0</div><div class="stat-unit">جنيه</div></div>
-        <div class="stat-box"><div class="stat-label">النقود بالجنيه</div><div class="stat-val" id="sCashEGP">0</div><div class="stat-unit">جنيه</div></div>
+        <div class="stat-box"><div class="stat-label">قيمة الذهب</div><div class="stat-val" id="sGold">0</div><div class="stat-unit">جنيه</div></div>
+        <div class="stat-box"><div class="stat-label">النقود</div><div class="stat-val" id="sCash">0</div><div class="stat-unit">جنيه</div></div>
       </div>
       <div class="summary-grid">
-        <div class="stat-box highlight" style="grid-column:1/-1"><div class="stat-label">إجمالي ثروتك</div><div class="stat-val" id="sTotalEGP">0</div><div class="stat-unit">جنيه مصري</div></div>
+        <div class="stat-box hl" style="grid-column:1/-1">
+          <div class="stat-label">إجمالي ثروتك</div>
+          <div class="stat-val" id="sTotal">0</div>
+          <div class="stat-unit">جنيه مصري</div>
+        </div>
       </div>
-      <div class="last-update" id="savedTime"></div>
+      <div class="last-upd" id="savedTime"></div>
     </div>
   </div>
 
   <!-- PRICES -->
   <div class="section" id="tab-prices">
     <div class="card">
-      <div class="card-title"><span class="dot"></span> أسعار الذهب (جنيه / جرام)</div>
+      <div class="card-title"><span class="dot"></span> أسعار الذهب (جنيه/جرام)</div>
       <div class="gold-row">
-        <div class="gold-box"><div class="karat">عيار 24</div><div class="gprice" id="g24price">--</div><div class="g-unit">جنيه / جرام</div></div>
-        <div class="gold-box"><div class="karat">عيار 21</div><div class="gprice" id="g21price">--</div><div class="g-unit">جنيه / جرام</div></div>
+        <div class="gold-box"><div class="karat">عيار 24</div><div class="gprice" id="p24">--</div><div class="gunit">جنيه/جرام</div></div>
+        <div class="gold-box"><div class="karat">عيار 21</div><div class="gprice" id="p21">--</div><div class="gunit">جنيه/جرام</div></div>
       </div>
-      <div class="status-txt" id="goldStatus">جاري التحميل...</div>
+      <div class="status-txt" id="goldSt">جاري التحميل...</div>
     </div>
     <div class="card">
       <div class="card-title"><span class="dot"></span> أسعار العملات (مقابل الجنيه)</div>
       <div class="rate-grid">
-        <div class="rate-box"><div class="flag">🇺🇸</div><div class="currency">دولار</div><div class="rate-val" id="rUSD">--</div></div>
-        <div class="rate-box"><div class="flag">🇪🇺</div><div class="currency">يورو</div><div class="rate-val" id="rEUR">--</div></div>
-        <div class="rate-box"><div class="flag">🇸🇦</div><div class="currency">ريال</div><div class="rate-val" id="rSAR">--</div></div>
-        <div class="rate-box"><div class="flag">🇪🇬</div><div class="currency">جنيه</div><div class="rate-val">1.00</div></div>
+        <div class="rate-box"><div class="flag">🇺🇸</div><div class="cname">دولار</div><div class="rval" id="rUSD">--</div></div>
+        <div class="rate-box"><div class="flag">🇪🇺</div><div class="cname">يورو</div><div class="rval" id="rEUR">--</div></div>
+        <div class="rate-box"><div class="flag">🇸🇦</div><div class="cname">ريال</div><div class="rval" id="rSAR">--</div></div>
+        <div class="rate-box"><div class="flag">🇪🇬</div><div class="cname">جنيه</div><div class="rval">1.00</div></div>
       </div>
-      <div class="status-txt" id="ratesStatus"></div>
-      <div class="last-update" id="lastUpdate"></div>
+      <div class="status-txt" id="rateSt"></div>
+      <div class="last-upd"   id="lastUpd"></div>
     </div>
   </div>
 
@@ -286,388 +240,373 @@
   <div class="section" id="tab-zakat">
     <div class="card">
       <div class="card-title"><span class="dot"></span> حساب الزكاة</div>
-      <div id="zakatContent"><div class="hint-text" style="padding:1rem 0">احفظ بياناتك أولاً من تبويب "أصولي"</div></div>
+      <div id="zakatContent"><div class="status-txt" style="padding:1rem 0">احفظ بياناتك أولاً</div></div>
     </div>
     <div class="card">
-      <div class="card-title"><span class="dot"></span> معلومات الزكاة</div>
+      <div class="card-title"><span class="dot"></span> معلومات</div>
       <div style="font-size:12px;color:var(--text-muted);line-height:1.8">
-        <p>• <strong>النصاب:</strong> 85 جرام ذهب عيار 24</p>
-        <p>• <strong>عيار 21:</strong> يُحوَّل تلقائياً لمعادله 24 (× 21/24)</p>
-        <p>• <strong>مقدار الزكاة:</strong> 2.5% من إجمالي الثروة</p>
-        <p>• <strong>شرط الحول:</strong> مرور سنة هجرية على بلوغ النصاب</p>
-        <p>• <strong>ملاحظة:</strong> تشمل الذهب (ادخار وزينة) والنقود</p>
+        <p>• <b>النصاب:</b> 85 جرام ذهب عيار 24</p>
+        <p>• <b>عيار 21:</b> يتحول تلقائياً (×21/24)</p>
+        <p>• <b>مقدار الزكاة:</b> 2.5% من إجمالي الثروة</p>
+        <p>• <b>الزكاة تشمل:</b> الذهب (ادخار وزينة) + النقود</p>
       </div>
     </div>
   </div>
-
 </div>
 
-<!-- Firebase SDK -->
-<!-- Firebase compat SDKs -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-// ===== FIREBASE INIT =====
-const firebaseConfig = {
-  apiKey: "AIzaSyAP6cb9HerGIdvaKqJtEZF4a4HVS4PpVqc",
-  authDomain: "zakah-89cd7.firebaseapp.com",
-  projectId: "zakah-89cd7",
-  storageBucket: "zakah-89cd7.firebasestorage.app",
-  messagingSenderId: "764011796925",
-  appId: "1:764011796925:web:2a61add92f1d79ddb29ad4"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db   = firebase.firestore();
+// ===== SUPABASE INIT =====
+const _supabase = supabase.createClient(
+  'https://dtzslosfmzfurgmuqfug.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0enNsb3NmbXpmdXJnbXVxZnVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzNDk4NzcsImV4cCI6MjEwMTkyNTg3N30.NlkAIuatLp912UdAlB3rDnKvxUtKjp-9HhfYdpILNqs'
+);
 
 // ===== STATE =====
-let rates    = { USD: null, EUR: null, SAR: null };
-let goldPrices = { g24: null, g21: null };
-let assets   = null;
-let nisabReachedDate = null;
-let currentUser = null;
-const NISAB_GRAMS_24 = 85;
+let rates      = { USD:null, EUR:null, SAR:null };
+let gold       = { g24:null, g21:null };
+let assets     = null;
+let nisabDate  = null;
+let user       = null;
+let isGuest    = false;
+const NISAB    = 85;
 
-// ===== AUTH HELPERS =====
-window.switchAuthTab = function(tab) {
-  document.getElementById('loginForm').style.display    = tab==='login'    ? 'block' : 'none';
-  document.getElementById('registerForm').style.display = tab==='register' ? 'block' : 'none';
-  document.getElementById('tabLogin').classList.toggle('active', tab==='login');
-  document.getElementById('tabRegister').classList.toggle('active', tab==='register');
+// ===== AUTH UI =====
+function authTab(t) {
+  document.getElementById('fLogin').style.display = t==='login' ? 'block':'none';
+  document.getElementById('fReg').style.display   = t==='reg'   ? 'block':'none';
+  document.getElementById('tLogin').classList.toggle('active', t==='login');
+  document.getElementById('tReg').classList.toggle('active',   t==='reg');
   document.getElementById('authErr').textContent = '';
-};
-
-function arabicAuthError(code) {
-  const m = {
-    'auth/email-already-in-use':'البريد مستخدم بالفعل',
-    'auth/weak-password':'كلمة المرور ضعيفة (6 أحرف على الأقل)',
-    'auth/invalid-email':'البريد الإلكتروني غير صحيح',
-    'auth/user-not-found':'البريد أو كلمة المرور غلط',
-    'auth/wrong-password':'البريد أو كلمة المرور غلط',
-    'auth/invalid-credential':'البريد أو كلمة المرور غلط',
-    'auth/too-many-requests':'محاولات كثيرة، حاول بعد قليل',
-    'auth/network-request-failed':'تحقق من الإنترنت',
-  };
-  return m[code] || 'حدث خطأ، حاول مجدداً';
 }
 
-window.doLogin = async function() {
-  const email = document.getElementById('loginEmail').value.trim();
-  const pass  = document.getElementById('loginPass').value;
-  if (!email || !pass) { document.getElementById('authErr').textContent='أدخل البريد وكلمة المرور'; return; }
-  document.getElementById('authErr').textContent = '';
-  try { await auth.signInWithEmailAndPassword(email, pass); }
-  catch(e) { document.getElementById('authErr').textContent = arabicAuthError(e.code); }
-};
+function setAuthErr(msg) { document.getElementById('authErr').textContent = msg; }
 
-window.doRegister = async function() {
-  const email = document.getElementById('regEmail').value.trim();
-  const pass  = document.getElementById('regPass').value;
-  const pass2 = document.getElementById('regPass2').value;
-  if (!email||!pass) { document.getElementById('authErr').textContent='أدخل البريد وكلمة المرور'; return; }
-  if (pass!==pass2)  { document.getElementById('authErr').textContent='كلمتا المرور غير متطابقتين'; return; }
-  if (pass.length<6) { document.getElementById('authErr').textContent='كلمة المرور 6 أحرف على الأقل'; return; }
-  document.getElementById('authErr').textContent = '';
-  try { await auth.createUserWithEmailAndPassword(email, pass); }
-  catch(e) { document.getElementById('authErr').textContent = arabicAuthError(e.code); }
-};
+function authErrMsg(code) {
+  return {
+    'invalid_credentials':       'البريد أو كلمة المرور غلط',
+    'email_address_invalid':     'البريد غير صحيح',
+    'weak_password':             'كلمة المرور ضعيفة جداً',
+    'user_already_exists':       'البريد مستخدم بالفعل',
+    'email_not_confirmed':       'تحقق من بريدك لتفعيل الحساب',
+    'over_email_send_rate_limit':'انتظر قليلاً ثم حاول',
+  }[code] || 'حدث خطأ، حاول مجدداً';
+}
 
-window.doLogout = async function() { await auth.signOut(); };
+async function doLogin() {
+  const email = document.getElementById('lEmail').value.trim();
+  const pass  = document.getElementById('lPass').value;
+  if (!email||!pass) { setAuthErr('أدخل البريد وكلمة المرور'); return; }
+  document.getElementById('lBtn').disabled = true;
+  document.getElementById('lBtn').textContent = '...';
+  const { error } = await _supabase.auth.signInWithPassword({ email, password: pass });
+  document.getElementById('lBtn').disabled = false;
+  document.getElementById('lBtn').textContent = 'دخول';
+  if (error) setAuthErr(authErrMsg(error.code||error.message));
+}
 
-window.handleAuthBtn = function() {
-  if (currentUser) doLogout();
-  else document.getElementById('authOverlay').style.display = 'flex';
-};
-window.closeAuthModal = function() {
-  document.getElementById('authOverlay').style.display = 'none';
-};
+async function doRegister() {
+  const email = document.getElementById('rEmail').value.trim();
+  const pass  = document.getElementById('rPass').value;
+  const pass2 = document.getElementById('rPass2').value;
+  if (!email||!pass)  { setAuthErr('أدخل البريد وكلمة المرور'); return; }
+  if (pass!==pass2)   { setAuthErr('كلمتا المرور غير متطابقتين'); return; }
+  if (pass.length<6)  { setAuthErr('كلمة المرور 6 أحرف على الأقل'); return; }
+  document.getElementById('rBtn').disabled = true;
+  document.getElementById('rBtn').textContent = '...';
+  const { error } = await _supabase.auth.signUp({ email, password: pass });
+  document.getElementById('rBtn').disabled = false;
+  document.getElementById('rBtn').textContent = 'إنشاء حساب';
+  if (error) setAuthErr(authErrMsg(error.code||error.message));
+  else setAuthErr('✓ تحقق من بريدك لتفعيل الحساب');
+}
 
-// ===== AUTH STATE LISTENER =====
-// Fallback: hide splash and force show app after 4s
-setTimeout(function() {
-  var sp = document.getElementById('splashScreen');
-  if (sp) sp.style.display = 'none';
-  var app = document.getElementById('appScreen');
-  if (app) { app.style.display = 'block'; app.style.visibility = 'visible'; }
-  // If Firebase never fired, load local data
-  if (!currentUser && !assets) {
-    loadLocalData();
-    if (assets) { fillInputs(); updateSummary(); updateZakat(); }
-  }
+function guestMode() {
+  isGuest = true;
+  showApp();
+  loadLocal();
+  if (assets) { fillInputs(); updateSummary(); updateZakat(); }
   fetchRates();
-}, 4000);
+}
 
-auth.onAuthStateChanged(async function(user) {
-  // Hide splash, ensure app is visible
-  var splash = document.getElementById('splashScreen');
-  if (splash) splash.style.display = 'none';
-  var app = document.getElementById('appScreen');
-  if (app) { app.style.display = 'block'; app.style.visibility = 'visible'; }
-
+function toggleAuth() {
   if (user) {
-    currentUser = user;
-    document.getElementById('authOverlay').style.display = 'none';
-    document.getElementById('userEmail').textContent = user.email;
-    document.getElementById('authBtn').textContent = 'خروج';
-    await loadUserData();
-    if (assets) { fillInputs(); updateSummary(); updateZakat(); }
+    _supabase.auth.signOut();
   } else {
-    currentUser = null;
-    document.getElementById('userEmail').textContent = 'زائر — بياناتك محفوظة محلياً';
-    document.getElementById('authBtn').textContent = 'دخول';
-    loadLocalData();
-    if (assets) { fillInputs(); updateSummary(); updateZakat(); }
+    showAuthScreen();
   }
-  fetchRates();
+}
+
+// ===== SCREENS =====
+function showApp() {
+  document.getElementById('authWrap').style.display = 'none';
+  document.getElementById('appWrap').style.display  = 'block';
+}
+function showAuthScreen() {
+  document.getElementById('authWrap').style.display = 'flex';
+  document.getElementById('appWrap').style.display  = 'none';
+}
+
+// ===== SUPABASE AUTH LISTENER =====
+_supabase.auth.onAuthStateChange(async (event, session) => {
+  if (session && session.user) {
+    user    = session.user;
+    isGuest = false;
+    document.getElementById('userBadge').textContent = user.email;
+    document.getElementById('authBtn').textContent   = 'خروج';
+    showApp();
+    await loadCloud();
+    if (assets) { fillInputs(); updateSummary(); updateZakat(); }
+    fetchRates();
+  } else {
+    if (!isGuest) {
+      user = null;
+      document.getElementById('authBtn').textContent = 'دخول';
+      document.getElementById('userBadge').textContent = 'زائر';
+      showAuthScreen();
+    }
+  }
 });
 
 // ===== LOCAL STORAGE =====
-function loadLocalData() {
+function loadLocal() {
   try {
     const a = localStorage.getItem('zakat_assets');
     const d = localStorage.getItem('zakat_nisab_date');
-    if (a) assets = JSON.parse(a);
-    if (d) nisabReachedDate = d;
+    if (a) assets   = JSON.parse(a);
+    if (d) nisabDate = d;
   } catch(e) {}
 }
-function saveLocalData() {
+function saveLocal() {
   try {
-    if (assets) localStorage.setItem('zakat_assets', JSON.stringify(assets));
-    if (nisabReachedDate) localStorage.setItem('zakat_nisab_date', nisabReachedDate);
+    localStorage.setItem('zakat_assets', JSON.stringify(assets));
+    if (nisabDate) localStorage.setItem('zakat_nisab_date', nisabDate);
     else localStorage.removeItem('zakat_nisab_date');
   } catch(e) {}
 }
 
-// ===== FIRESTORE =====
-async function loadUserData() {
-  if (!currentUser) return;
+// ===== SUPABASE DB =====
+async function loadCloud() {
+  if (!user) return;
   setSyncing(true);
-  const st = document.getElementById('saveStatus');
   try {
-    const snap = await db.collection('users').doc(currentUser.uid).get();
-    if (snap.exists) {
-      const data = snap.data();
-      if (data.assets && typeof data.assets === 'object') {
-        assets = data.assets;
-      } else if (data.g24 !== undefined) {
-        assets = { g24:data.g24||0, g21:data.g21||0, sar:data.sar||0,
-                   usd:data.usd||0, eur:data.eur||0, egp:data.egp||0,
-                   savedAt:data.savedAt||new Date().toISOString() };
-      } else { assets = null; }
-      nisabReachedDate = data.nisabReachedDate || null;
-      if (st) { st.textContent = assets ? '✓ تم تحميل بياناتك من السحابة' : 'لا توجد بيانات محفوظة بعد'; setTimeout(()=>{st.textContent='';},3000); }
+    const { data, error } = await _supabase
+      .from('assets')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+    if (data) {
+      assets   = { g24:data.g24||0, g21:data.g21||0, sar:data.sar||0, usd:data.usd||0, eur:data.eur||0, egp:data.egp||0, savedAt:data.updated_at };
+      nisabDate = data.nisab_date || null;
+      setStatus('✓ تم تحميل بياناتك', 3000);
     } else {
-      if (st) { st.textContent = 'لا توجد بيانات محفوظة بعد'; setTimeout(()=>{st.textContent='';},3000); }
+      setStatus('لا توجد بيانات محفوظة بعد', 3000);
     }
-  } catch(e) {
-    console.error('loadUserData:', e);
-    if (st) st.textContent = 'خطأ في تحميل البيانات: ' + (e.code||e.message||'unknown');
-  }
+  } catch(e) { console.error(e); }
   setSyncing(false);
 }
 
-async function saveUserData() {
-  if (!currentUser || !assets) return;
+async function saveCloud() {
+  if (!user || !assets) return;
   setSyncing(true);
-  const st = document.getElementById('saveStatus');
-  try {
-    await db.collection('users').doc(currentUser.uid).set({
-      assets: {...assets},
-      nisabReachedDate: nisabReachedDate || null,
-      g24:assets.g24||0, g21:assets.g21||0,
-      sar:assets.sar||0, usd:assets.usd||0,
-      eur:assets.eur||0, egp:assets.egp||0,
-      savedAt:assets.savedAt, lastSaved:new Date().toISOString()
-    }, { merge: true });
-  } catch(e) {
-    console.error('saveUserData:', e);
-    if (st) st.textContent = 'فشل الحفظ: ' + (e.code||e.message||'تحقق من الإنترنت');
+  const { error } = await _supabase.from('assets').upsert({
+    user_id:    user.id,
+    g24:        assets.g24,
+    g21:        assets.g21,
+    sar:        assets.sar,
+    usd:        assets.usd,
+    eur:        assets.eur,
+    egp:        assets.egp,
+    nisab_date: nisabDate || null,
+    updated_at: new Date().toISOString()
+  }, { onConflict: 'user_id' });
+  if (error) {
+    console.error(error);
+    setStatus('⚠ فشل الحفظ: ' + (error.message||error.code), 0);
   }
   setSyncing(false);
 }
 
 function setSyncing(on) {
-  const dot = document.getElementById('syncDot');
-  if (dot) dot.className = 'sync-indicator' + (on ? ' syncing' : '');
+  var d = document.getElementById('syncDot');
+  if (d) d.className = 'sync' + (on?' on':'');
+}
+function setStatus(msg, ms) {
+  var el = document.getElementById('saveStatus');
+  if (!el) return;
+  el.textContent = msg;
+  if (ms) setTimeout(()=>{ el.textContent=''; }, ms);
 }
 
 // ===== RATES & GOLD =====
 window.fetchRates = async function() {
-  document.getElementById('goldStatus').textContent = 'جاري التحديث...';
+  document.getElementById('goldSt').textContent = 'جاري التحديث...';
   // Exchange rates
-  let gotRates = false;
+  let ok = false;
   try {
     const r = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json');
     const d = await r.json();
     if (d.usd && d.usd.egp) {
       rates.USD = d.usd.egp; rates.EUR = d.usd.egp/d.usd.eur; rates.SAR = d.usd.egp/d.usd.sar;
-      gotRates = true; document.getElementById('ratesStatus').textContent = ''; updateRatesUI();
+      ok = true; document.getElementById('rateSt').textContent = ''; updateRatesUI();
     }
   } catch(e) {}
-  if (!gotRates) {
-    try {
-      const r = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-      const d = await r.json();
-      if (d.rates && d.rates.EGP) {
-        rates.USD = d.rates.EGP; rates.EUR = d.rates.EGP/d.rates.EUR; rates.SAR = d.rates.EGP/d.rates.SAR;
-        gotRates = true; updateRatesUI();
-      }
-    } catch(e) {}
-  }
-  if (!gotRates) {
+  if (!ok) {
     rates.USD=50.5; rates.EUR=55.8; rates.SAR=13.5;
-    document.getElementById('ratesStatus').textContent = 'أسعار عملات تقريبية'; updateRatesUI();
+    document.getElementById('rateSt').textContent = 'أسعار تقريبية';
+    updateRatesUI();
   }
-  // Gold price
-  let gotGold = false;
+  // Gold
+  let gok = false;
   try {
     const r = await fetch('https://api.gold-api.com/price/XAU');
     const d = await r.json();
     if (d && d.price) {
-      goldPrices.g24 = (parseFloat(d.price)/31.1035)*rates.USD;
-      goldPrices.g21 = goldPrices.g24*(21/24);
-      gotGold = true; document.getElementById('goldStatus').textContent = '';
+      gold.g24 = (parseFloat(d.price)/31.1035)*rates.USD;
+      gold.g21 = gold.g24*(21/24);
+      gok = true; document.getElementById('goldSt').textContent = '';
     }
   } catch(e) {}
-  if (!gotGold) {
+  if (!gok) {
     try {
       const r = await fetch('https://api.metals.live/v1/spot/gold');
       const d = await r.json();
-      const oz = Array.isArray(d) ? d[0]?.gold : d?.price;
-      if (oz) {
-        goldPrices.g24 = (parseFloat(oz)/31.1035)*rates.USD;
-        goldPrices.g21 = goldPrices.g24*(21/24);
-        gotGold = true; document.getElementById('goldStatus').textContent = '';
-      }
+      const oz = Array.isArray(d)?d[0]?.gold:d?.price;
+      if (oz) { gold.g24=(parseFloat(oz)/31.1035)*rates.USD; gold.g21=gold.g24*(21/24); gok=true; document.getElementById('goldSt').textContent=''; }
     } catch(e) {}
   }
-  if (!gotGold) { goldPrices.g24=6691; goldPrices.g21=5855; document.getElementById('goldStatus').textContent='سعر تقريبي'; }
+  if (!gok) { gold.g24=6691; gold.g21=5855; document.getElementById('goldSt').textContent='سعر تقريبي'; }
   updateGoldUI();
   if (assets) { updateSummary(); updateZakat(); }
-  document.getElementById('lastUpdate').textContent = 'آخر تحديث: ' + new Date().toLocaleTimeString('ar-EG');
+  document.getElementById('lastUpd').textContent = 'آخر تحديث: ' + new Date().toLocaleTimeString('ar-EG');
 };
 
 function updateRatesUI() {
-  document.getElementById('rUSD').textContent  = rates.USD ? rates.USD.toFixed(2)  : '--';
-  document.getElementById('rEUR').textContent  = rates.EUR ? rates.EUR.toFixed(2)  : '--';
-  document.getElementById('rSAR').textContent  = rates.SAR ? rates.SAR.toFixed(2)  : '--';
-  document.getElementById('phUSD').textContent = rates.USD ? rates.USD.toFixed(1)  : '--';
-  document.getElementById('phEUR').textContent = rates.EUR ? rates.EUR.toFixed(1)  : '--';
+  document.getElementById('rUSD').textContent  = rates.USD ? rates.USD.toFixed(2):'--';
+  document.getElementById('rEUR').textContent  = rates.EUR ? rates.EUR.toFixed(2):'--';
+  document.getElementById('rSAR').textContent  = rates.SAR ? rates.SAR.toFixed(2):'--';
+  document.getElementById('phUSD').textContent = rates.USD ? rates.USD.toFixed(1):'--';
+  document.getElementById('phEUR').textContent = rates.EUR ? rates.EUR.toFixed(1):'--';
 }
 function updateGoldUI() {
-  document.getElementById('g24price').textContent = goldPrices.g24 ? goldPrices.g24.toFixed(0) : '--';
-  document.getElementById('g21price').textContent = goldPrices.g21 ? goldPrices.g21.toFixed(0) : '--';
-  document.getElementById('ph24').textContent     = goldPrices.g24 ? goldPrices.g24.toFixed(0) : '--';
-  document.getElementById('ph21').textContent     = goldPrices.g21 ? goldPrices.g21.toFixed(0) : '--';
+  document.getElementById('p24').textContent   = gold.g24 ? gold.g24.toFixed(0):'--';
+  document.getElementById('p21').textContent   = gold.g21 ? gold.g21.toFixed(0):'--';
+  document.getElementById('ph24').textContent  = gold.g24 ? gold.g24.toFixed(0):'--';
+  document.getElementById('ph21').textContent  = gold.g21 ? gold.g21.toFixed(0):'--';
 }
 
 // ===== ASSETS =====
 window.saveAssets = async function() {
-  const btn = document.getElementById('saveBtn');
-  btn.disabled = true; btn.textContent = 'جاري الحفظ...';
+  var btn = document.getElementById('saveBtn');
+  btn.disabled=true; btn.textContent='جاري الحفظ...';
   assets = {
     g24: parseFloat(document.getElementById('g24').value)||0,
     g21: parseFloat(document.getElementById('g21').value)||0,
-    sar: parseFloat(document.getElementById('sar').value)||0,
-    usd: parseFloat(document.getElementById('usd').value)||0,
-    eur: parseFloat(document.getElementById('eur').value)||0,
-    egp: parseFloat(document.getElementById('egp').value)||0,
+    sar: parseFloat(document.getElementById('iSAR').value)||0,
+    usd: parseFloat(document.getElementById('iUSD').value)||0,
+    eur: parseFloat(document.getElementById('iEUR').value)||0,
+    egp: parseFloat(document.getElementById('iEGP').value)||0,
     savedAt: new Date().toISOString()
   };
-  checkNisabDate();
-  if (currentUser) {
-    await saveUserData();
-    document.getElementById('saveStatus').textContent = '✓ تم الحفظ في حسابك ☁';
+  checkNisab();
+  if (user) {
+    await saveCloud();
+    setStatus('✓ تم الحفظ في حسابك ☁', 3000);
   } else {
-    saveLocalData();
-    document.getElementById('saveStatus').textContent = '✓ تم الحفظ محلياً — سجّل دخول للحفظ في السحابة';
+    saveLocal();
+    setStatus('✓ تم الحفظ محلياً', 3000);
   }
   updateSummary(); updateZakat();
-  btn.disabled = false; btn.textContent = '💾 حفظ وحساب';
-  setTimeout(()=>{ document.getElementById('saveStatus').textContent=''; }, 3000);
+  btn.disabled=false; btn.textContent='💾 حفظ وحساب';
 };
 
 function fillInputs() {
   if (!assets) return;
-  ['g24','g21','sar','usd','eur','egp'].forEach(k => {
-    document.getElementById(k).value = assets[k] || '';
-  });
+  document.getElementById('g24').value  = assets.g24||'';
+  document.getElementById('g21').value  = assets.g21||'';
+  document.getElementById('iSAR').value = assets.sar||'';
+  document.getElementById('iUSD').value = assets.usd||'';
+  document.getElementById('iEUR').value = assets.eur||'';
+  document.getElementById('iEGP').value = assets.egp||'';
 }
 
-function checkNisabDate() {
+function checkNisab() {
   if (!assets) return;
-  const total24 = (assets.g24||0) + ((assets.g21||0)*21/24);
-  if (total24 >= NISAB_GRAMS_24) { if (!nisabReachedDate) nisabReachedDate = new Date().toISOString(); }
-  else { nisabReachedDate = null; }
+  var t = (assets.g24||0)+((assets.g21||0)*21/24);
+  if (t>=NISAB) { if (!nisabDate) nisabDate=new Date().toISOString(); }
+  else nisabDate=null;
 }
 
 function calcTotals() {
   if (!assets) return null;
-  const goldEGP = (assets.g24||0)*(goldPrices.g24||0) + (assets.g21||0)*(goldPrices.g21||0);
-  const cashEGP = (assets.sar||0)*(rates.SAR||13.5) + (assets.usd||0)*(rates.USD||50.5) + (assets.eur||0)*(rates.EUR||55.8) + (assets.egp||0);
+  var goldEGP = (assets.g24||0)*(gold.g24||0)+(assets.g21||0)*(gold.g21||0);
+  var cashEGP = (assets.sar||0)*(rates.SAR||13.5)+(assets.usd||0)*(rates.USD||50.5)+(assets.eur||0)*(rates.EUR||55.8)+(assets.egp||0);
   return { goldEGP, cashEGP, total: goldEGP+cashEGP };
 }
 
 function updateSummary() {
   if (!assets) return;
-  const t = calcTotals();
-  document.getElementById('s24').textContent      = (assets.g24||0).toFixed(2);
-  document.getElementById('s21').textContent      = (assets.g21||0).toFixed(2);
-  document.getElementById('sGoldEGP').textContent = Math.round(t.goldEGP).toLocaleString('ar-EG');
-  document.getElementById('sCashEGP').textContent = Math.round(t.cashEGP).toLocaleString('ar-EG');
-  document.getElementById('sTotalEGP').textContent= Math.round(t.total).toLocaleString('ar-EG');
-  document.getElementById('summaryCard').style.display = 'block';
-  const d = new Date(assets.savedAt);
-  document.getElementById('savedTime').textContent = 'آخر تعديل: ' + d.toLocaleDateString('ar-EG') + ' ' + d.toLocaleTimeString('ar-EG');
+  var t = calcTotals();
+  document.getElementById('s24').textContent   = (assets.g24||0).toFixed(2);
+  document.getElementById('s21').textContent   = (assets.g21||0).toFixed(2);
+  document.getElementById('sGold').textContent = Math.round(t.goldEGP).toLocaleString('ar-EG');
+  document.getElementById('sCash').textContent = Math.round(t.cashEGP).toLocaleString('ar-EG');
+  document.getElementById('sTotal').textContent= Math.round(t.total).toLocaleString('ar-EG');
+  document.getElementById('summaryCard').style.display='block';
+  var d=new Date(assets.savedAt);
+  document.getElementById('savedTime').textContent='آخر تعديل: '+d.toLocaleDateString('ar-EG')+' '+d.toLocaleTimeString('ar-EG');
 }
 
 function updateZakat() {
   if (!assets) return;
-  const t = calcTotals();
-  const total24  = (assets.g24||0) + ((assets.g21||0)*21/24);
-  const nisabEGP = NISAB_GRAMS_24 * (goldPrices.g24||0);
-  const isEligible = total24 >= NISAB_GRAMS_24;
-  const zakatAmt   = isEligible ? t.total*0.025 : 0;
-  const pct = Math.min((total24/NISAB_GRAMS_24)*100, 100);
-  let html = '';
-  if (isEligible) {
-    const dateStr = nisabReachedDate
-      ? new Date(nisabReachedDate).toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'})
-      : 'منذ آخر حفظ';
-    html += '<div class="zakat-card eligible">'
-          + '<div class="zakat-badge badge-yes">✓ بلغت النصاب</div>'
-          + '<div class="zakat-title yes">أنت مستحق للزكاة</div>'
-          + '<div class="zakat-sub">بلغت النصاب منذ: ' + dateStr + '</div>'
-          + '<div class="zakat-sub">معادل ذهبك عيار 24: <strong>' + total24.toFixed(2) + ' جرام</strong> (النصاب: ' + NISAB_GRAMS_24 + ' جرام)</div>'
-          + '<div class="zakat-amount-row"><div class="zakat-amount-label">مقدار الزكاة (2.5%)</div>'
-          + '<div class="zakat-amount-val">' + Math.round(zakatAmt).toLocaleString('ar-EG') + '</div>'
-          + '<div class="zakat-amount-unit">جنيه مصري</div></div></div>';
+  var t      = calcTotals();
+  var t24    = (assets.g24||0)+((assets.g21||0)*21/24);
+  var nEGP   = NISAB*(gold.g24||0);
+  var elig   = t24>=NISAB;
+  var zamt   = elig ? t.total*0.025 : 0;
+  var pct    = Math.min((t24/NISAB)*100,100);
+  var html   = '';
+  if (elig) {
+    var ds = nisabDate ? new Date(nisabDate).toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'}) : 'منذ آخر حفظ';
+    html += '<div class="zakat-card yes">'
+      +'<div class="zakat-badge badge-y">✓ بلغت النصاب</div>'
+      +'<div class="zakat-title y">أنت مستحق للزكاة</div>'
+      +'<div class="zakat-sub">بلغت النصاب منذ: '+ds+'</div>'
+      +'<div class="zakat-sub">معادل ذهبك عيار 24: <b>'+t24.toFixed(2)+' جرام</b> (النصاب: '+NISAB+' جرام)</div>'
+      +'<div class="zakat-amt-row"><div class="zakat-amt-lbl">مقدار الزكاة (2.5%)</div>'
+      +'<div class="zakat-amt-val">'+Math.round(zamt).toLocaleString('ar-EG')+'</div>'
+      +'<div class="zakat-amt-unit">جنيه</div></div></div>';
   } else {
-    html += '<div class="zakat-card not-eligible">'
-          + '<div class="zakat-badge badge-no">✗ لم تبلغ النصاب</div>'
-          + '<div class="zakat-title no">لست مستحقاً للزكاة حالياً</div>'
-          + '<div class="zakat-sub">معادل ذهبك عيار 24: ' + total24.toFixed(2) + ' جرام</div>'
-          + '<div class="zakat-sub">متبقي للنصاب: ' + (NISAB_GRAMS_24-total24).toFixed(2) + ' جرام</div></div>';
+    html += '<div class="zakat-card no">'
+      +'<div class="zakat-badge badge-n">✗ لم تبلغ النصاب</div>'
+      +'<div class="zakat-title n">لست مستحقاً للزكاة حالياً</div>'
+      +'<div class="zakat-sub">معادل ذهبك عيار 24: '+t24.toFixed(2)+' جرام</div>'
+      +'<div class="zakat-sub">متبقي للنصاب: '+(NISAB-t24).toFixed(2)+' جرام</div></div>';
   }
-  html += '<div class="nisab-bar-wrap">'
-        + '<div class="nisab-bar-label"><span>تقدمك نحو النصاب</span><span>' + pct.toFixed(1) + '%</span></div>'
-        + '<div class="nisab-bar-track"><div class="nisab-bar-fill ' + (isEligible?'bar-fill-yes':'bar-fill-no') + '" style="width:' + pct + '%"></div></div></div>';
-  if (nisabEGP) {
-    html += '<div style="font-size:11px;color:var(--text-hint);text-align:center;margin-top:10px;padding:6px;background:var(--gold-bg2);border-radius:var(--radius-sm);border:1px solid var(--border)">'
-          + 'قيمة النصاب الحالية: ' + Math.round(nisabEGP).toLocaleString('ar-EG') + ' جنيه</div>';
-  }
+  html += '<div class="bar-wrap"><div class="bar-lbl"><span>تقدمك نحو النصاب</span><span>'+pct.toFixed(1)+'%</span></div>'
+    +'<div class="bar-track"><div class="bar-fill '+(elig?'bar-y':'bar-n')+'" style="width:'+pct+'%"></div></div></div>';
+  if (nEGP) html += '<div class="nisab-note">قيمة النصاب الحالية: '+Math.round(nEGP).toLocaleString('ar-EG')+' جنيه</div>';
   document.getElementById('zakatContent').innerHTML = html;
 }
 
-// ===== TABS =====
-window.showTab = function(name, el) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+window.showTab = function(name,el) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   el.classList.add('active');
 };
 
+// ===== INIT =====
+// Check existing session on load
+(async function() {
+  const { data: { session } } = await _supabase.auth.getSession();
+  if (!session) {
+    // No active session — show auth screen
+    showAuthScreen();
+  }
+  // onAuthStateChange will handle the rest
+})();
 </script>
 </body>
 </html>
