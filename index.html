@@ -139,7 +139,34 @@
   <div class="splash-dots"><span></span><span></span><span></span></div>
 </div>
 
-<!-- ===== AUTH SCREEN ===== -->
+<!-- ===== AUTH MODAL ===== -->
+<div id="authOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;align-items:center;justify-content:center;padding:1.5rem">
+  <div class="auth-card" style="max-width:340px;width:100%;position:relative">
+    <button onclick="closeAuthModal()" style="position:absolute;top:10px;left:10px;background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted)">✕</button>
+    <div style="text-align:center;margin-bottom:1rem">
+      <div style="font-size:22px;color:var(--gold-dark);font-weight:700">⚜ زكاة</div>
+      <div style="font-size:11px;color:var(--text-hint);margin-top:4px">سجّل لحفظ بياناتك على أي جهاز</div>
+    </div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">تسجيل الدخول</div>
+      <div class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">حساب جديد</div>
+    </div>
+    <div id="loginForm">
+      <input class="auth-input" type="email" id="loginEmail" placeholder="البريد الإلكتروني" autocomplete="email">
+      <input class="auth-input" type="password" id="loginPass" placeholder="كلمة المرور" autocomplete="current-password">
+      <button class="auth-btn" onclick="doLogin()">دخول</button>
+    </div>
+    <div id="registerForm" style="display:none">
+      <input class="auth-input" type="email" id="regEmail" placeholder="البريد الإلكتروني" autocomplete="email">
+      <input class="auth-input" type="password" id="regPass" placeholder="كلمة المرور (6 أحرف على الأقل)" autocomplete="new-password">
+      <input class="auth-input" type="password" id="regPass2" placeholder="تأكيد كلمة المرور" autocomplete="new-password">
+      <button class="auth-btn" onclick="doRegister()">إنشاء حساب</button>
+    </div>
+    <div class="auth-err" id="authErr"></div>
+  </div>
+</div>
+
+<!-- ===== AUTH SCREEN (unused now — kept for compat) ===== -->
 <div class="auth-screen" id="authScreen" style="display:none">
   <div class="auth-logo">⚜</div>
   <div class="auth-title">زكاة</div>
@@ -169,17 +196,17 @@
 </div>
 
 <!-- ===== MAIN APP ===== -->
-<div class="app-screen" id="appScreen" style="display:none">
+<div class="app-screen" id="appScreen">
 
   <div class="header">
     <div class="header-top">
       <div>
         <div class="app-title">⚜ زكاة <span class="sync-indicator" id="syncDot"></span></div>
-        <div class="user-badge" id="userEmail"></div>
+        <div class="user-badge" id="userEmail">زائر — بياناتك محفوظة محلياً</div>
       </div>
       <div class="header-btns">
         <button class="hdr-btn" onclick="fetchRates()">↻</button>
-        <button class="hdr-btn" onclick="doLogout()">خروج</button>
+        <button class="hdr-btn" id="authBtn" onclick="handleAuthBtn()">دخول</button>
       </div>
     </div>
     <div class="prices-bar">
@@ -354,57 +381,124 @@ window.doRegister = async function() {
 
 window.doLogout = async function() {
   await signOut(auth);
+  // After logout keep showing app with local data
 };
 
 // ===== AUTH STATE =====
 onAuthStateChanged(auth, async (user) => {
-  // Always hide splash first
   document.getElementById('splashScreen').style.display = 'none';
   if (user) {
     currentUser = user;
-    document.getElementById('authScreen').style.display = 'none';
-    document.getElementById('appScreen').style.display = 'block';
+    document.getElementById('authOverlay').style.display = 'none';
     document.getElementById('userEmail').textContent = user.email;
+    document.getElementById('authBtn').textContent = 'خروج';
+    // Load cloud data (merges over local if exists)
     await loadUserData();
-    fetchRates();
+    updateRatesUI(); updateGoldUI();
+    if (assets) { fillInputs(); updateSummary(); updateZakat(); }
   } else {
     currentUser = null;
-    assets = null;
-    nisabReachedDate = null;
-    document.getElementById('authScreen').style.display = 'flex';
-    document.getElementById('appScreen').style.display = 'none';
+    document.getElementById('userEmail').textContent = 'زائر — بياناتك محفوظة محلياً';
+    document.getElementById('authBtn').textContent = 'دخول';
+    // Load from localStorage for guests
+    loadLocalData();
+    if (assets) { fillInputs(); updateSummary(); updateZakat(); }
   }
+  fetchRates();
 });
+
+window.handleAuthBtn = function() {
+  if (currentUser) {
+    doLogout();
+  } else {
+    openAuthModal();
+  }
+};
+
+window.openAuthModal = function() {
+  document.getElementById('authOverlay').style.display = 'flex';
+};
+
+window.closeAuthModal = function() {
+  document.getElementById('authOverlay').style.display = 'none';
+};
+
+// ===== LOCAL STORAGE (guests) =====
+function loadLocalData() {
+  try {
+    const a = localStorage.getItem('zakat_assets');
+    const d = localStorage.getItem('zakat_nisab_date');
+    if (a) assets = JSON.parse(a);
+    if (d) nisabReachedDate = d;
+  } catch(e) {}
+}
+
+function saveLocalData() {
+  try {
+    if (assets) localStorage.setItem('zakat_assets', JSON.stringify(assets));
+    if (nisabReachedDate) localStorage.setItem('zakat_nisab_date', nisabReachedDate);
+    else localStorage.removeItem('zakat_nisab_date');
+  } catch(e) {}
+}
 
 // ===== FIRESTORE =====
 async function loadUserData() {
   if (!currentUser) return;
   setSyncing(true);
+  const statusEl = document.getElementById('saveStatus');
   try {
     const ref = doc(db, 'users', currentUser.uid);
     const snap = await getDoc(ref);
     if (snap.exists()) {
       const data = snap.data();
-      assets = data.assets || null;
+      // Support nested format {assets:{...}} and flat format {g24:..., g21:...}
+      if (data.assets && typeof data.assets === 'object') {
+        assets = data.assets;
+      } else if (data.g24 !== undefined) {
+        assets = { g24: data.g24||0, g21: data.g21||0, sar: data.sar||0, usd: data.usd||0, eur: data.eur||0, egp: data.egp||0, savedAt: data.savedAt || new Date().toISOString() };
+      } else {
+        assets = null;
+      }
       nisabReachedDate = data.nisabReachedDate || null;
       if (assets) {
-        fillInputs();
-        updateSummary();
-        updateZakat();
+        fillInputs(); updateSummary(); updateZakat();
+        if (statusEl) { statusEl.textContent = '✓ تم تحميل بياناتك من السحابة'; setTimeout(()=>{ statusEl.textContent=''; },3000); }
+      } else {
+        if (statusEl) { statusEl.textContent = 'لا توجد بيانات محفوظة بعد'; setTimeout(()=>{ statusEl.textContent=''; },3000); }
       }
+    } else {
+      if (statusEl) { statusEl.textContent = 'لا توجد بيانات محفوظة بعد'; setTimeout(()=>{ statusEl.textContent=''; },3000); }
     }
-  } catch(e) { console.error(e); }
+  } catch(e) {
+    console.error('loadUserData error:', e);
+    if (statusEl) statusEl.textContent = 'خطأ في تحميل البيانات: ' + (e.code || e.message || 'unknown');
+  }
   setSyncing(false);
 }
 
 async function saveUserData() {
   if (!currentUser || !assets) return;
   setSyncing(true);
+  const statusEl = document.getElementById('saveStatus');
   try {
     const ref = doc(db, 'users', currentUser.uid);
-    await setDoc(ref, { assets, nisabReachedDate: nisabReachedDate || null }, { merge: true });
+    // Save both nested (assets:{}) and flat fields as backup
+    const payload = {
+      assets: { ...assets },
+      nisabReachedDate: nisabReachedDate || null,
+      g24: assets.g24||0, g21: assets.g21||0,
+      sar: assets.sar||0, usd: assets.usd||0,
+      eur: assets.eur||0, egp: assets.egp||0,
+      savedAt: assets.savedAt, lastSaved: new Date().toISOString()
+    };
+    await setDoc(ref, payload, { merge: true });
+    // Verify
+    const verify = await getDoc(ref);
+    if (!verify.exists()) throw new Error('document not found after save');
+    console.log('Firestore save verified:', verify.data());
   } catch(e) {
-    document.getElementById('saveStatus').textContent = '⚠ فشل الحفظ، تحقق من الإنترنت';
+    console.error('saveUserData error:', e);
+    if (statusEl) statusEl.textContent = 'فشل الحفظ: ' + (e.code || e.message || 'تحقق من الإنترنت');
   }
   setSyncing(false);
 }
@@ -515,14 +609,19 @@ window.saveAssets = async function() {
   };
 
   checkNisabDate();
-  await saveUserData();
+  if (currentUser) {
+    await saveUserData();
+    document.getElementById('saveStatus').textContent = '✓ تم الحفظ في حسابك ☁';
+  } else {
+    saveLocalData();
+    document.getElementById('saveStatus').textContent = '✓ تم الحفظ محلياً — سجّل دخول للحفظ في السحابة';
+  }
   updateSummary();
   updateZakat();
 
   btn.disabled = false;
   btn.textContent = '💾 حفظ وحساب';
-  document.getElementById('saveStatus').textContent = '✓ تم الحفظ في حسابك';
-  setTimeout(() => document.getElementById('saveStatus').textContent = '', 2500);
+  setTimeout(() => document.getElementById('saveStatus').textContent = '', 3000);
 };
 
 function fillInputs() {
