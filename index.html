@@ -28,7 +28,6 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--gol
 .auth-input { width:100%; border:1px solid var(--border-strong); border-radius:var(--radius-sm); padding:10px 12px; font-size:14px; background:var(--gold-bg); color:var(--text); margin-bottom:10px; direction:ltr; text-align:right; }
 .auth-input:focus { outline:none; border-color:var(--gold); background:#fff; }
 .auth-btn { width:100%; background:linear-gradient(135deg,#8B6310,#C9941A); color:#fff; border:none; border-radius:var(--radius-sm); padding:11px; font-size:14px; font-weight:600; cursor:pointer; }
-.auth-btn:active { opacity:0.85; }
 .auth-btn:disabled { opacity:0.5; cursor:not-allowed; }
 .auth-err { font-size:12px; color:var(--red); text-align:center; margin-top:8px; min-height:18px; }
 .guest-btn { width:100%; background:transparent; border:1px dashed var(--border-strong); border-radius:var(--radius-sm); padding:9px; font-size:13px; color:var(--text-muted); cursor:pointer; margin-top:8px; }
@@ -38,7 +37,7 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--gol
 .header { background:linear-gradient(135deg,#3D2A00 0%,#6B4800 50%,#3D2A00 100%); padding:1.1rem 1.25rem 0.6rem; position:sticky; top:0; z-index:100; }
 .header-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.6rem; }
 .app-title { font-size:22px; font-weight:700; color:var(--gold-light); letter-spacing:2px; }
-.user-badge { font-size:10px; color:rgba(240,192,64,0.6); margin-top:2px; }
+.user-badge { font-size:10px; color:rgba(240,192,64,0.6); margin-top:2px; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .hdr-btns { display:flex; gap:6px; }
 .hdr-btn { background:rgba(201,148,26,0.2); border:1px solid rgba(201,148,26,0.4); color:var(--gold-light); padding:5px 10px; border-radius:var(--radius-sm); font-size:11px; cursor:pointer; }
 .prices-bar { display:flex; gap:8px; overflow-x:auto; padding-bottom:6px; scrollbar-width:none; }
@@ -80,56 +79,52 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--gol
 .zakat-card { border-radius:var(--radius); padding:1.1rem; margin-bottom:1rem; }
 .zakat-card.yes { background:var(--green-bg); border:1px solid rgba(46,125,50,0.3); }
 .zakat-card.no  { background:var(--red-bg);   border:1px solid rgba(192,57,43,0.3); }
-.zakat-badge { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; margin-bottom:8px; }
-.badge-y { background:rgba(46,125,50,0.15); color:var(--green); }
-.badge-n { background:rgba(192,57,43,0.12); color:var(--red); }
-.zakat-title { font-size:15px; font-weight:700; margin-bottom:4px; }
-.zakat-title.y { color:var(--green); } .zakat-title.n { color:var(--red); }
-.zakat-sub { font-size:12px; color:var(--text-muted); line-height:1.5; margin-top:3px; }
-.zakat-amt-row { display:flex; align-items:baseline; gap:6px; margin-top:10px; padding-top:10px; border-top:1px solid rgba(46,125,50,0.2); }
-.zakat-amt-lbl { font-size:12px; color:var(--text-muted); }
-.zakat-amt-val { font-size:20px; font-weight:700; color:var(--green); direction:ltr; }
-.zakat-amt-unit { font-size:12px; color:var(--text-muted); }
+.zbadge { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; margin-bottom:8px; }
+.by { background:rgba(46,125,50,0.15); color:var(--green); }
+.bn { background:rgba(192,57,43,0.12); color:var(--red); }
+.zt { font-size:15px; font-weight:700; margin-bottom:4px; }
+.zt.y { color:var(--green); } .zt.n { color:var(--red); }
+.zs { font-size:12px; color:var(--text-muted); line-height:1.5; margin-top:3px; }
+.zamtrow { display:flex; align-items:baseline; gap:6px; margin-top:10px; padding-top:10px; border-top:1px solid rgba(46,125,50,0.2); }
 
 .bar-wrap { margin-top:10px; padding-top:10px; border-top:1px solid var(--border); }
 .bar-lbl { display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted); margin-bottom:5px; }
 .bar-track { background:var(--gold-bg2); border-radius:10px; height:8px; overflow:hidden; border:1px solid var(--border); }
 .bar-fill { height:100%; border-radius:10px; transition:width .5s ease; }
-.bar-y { background:linear-gradient(90deg,#4CAF50,#2E7D32); }
-.bar-n { background:linear-gradient(90deg,#E57373,#C0392B); }
+.by2 { background:linear-gradient(90deg,#4CAF50,#2E7D32); }
+.bn2 { background:linear-gradient(90deg,#E57373,#C0392B); }
 
 .gold-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
 .gold-box { background:linear-gradient(135deg,#FDF0C0,#FAE080); border:1px solid rgba(180,140,40,0.4); border-radius:var(--radius-sm); padding:.75rem; text-align:center; }
-.gold-box .karat { font-size:11px; color:var(--gold-dark); font-weight:600; }
-.gold-box .gprice { font-size:17px; font-weight:700; color:var(--gold-dark); direction:ltr; }
-.gold-box .gunit { font-size:10px; color:var(--text-muted); }
+.karat { font-size:11px; color:var(--gold-dark); font-weight:600; }
+.gprice { font-size:17px; font-weight:700; color:var(--gold-dark); direction:ltr; }
+.gunit { font-size:10px; color:var(--text-muted); }
 
 .rate-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .rate-box { background:var(--gold-bg2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:.75rem; }
-.rate-box .flag { font-size:20px; margin-bottom:4px; }
-.rate-box .cname { font-size:11px; color:var(--text-muted); }
-.rate-box .rval { font-size:15px; font-weight:700; color:var(--text); direction:ltr; }
+.rflag { font-size:20px; margin-bottom:4px; }
+.rcname { font-size:11px; color:var(--text-muted); }
+.rval { font-size:15px; font-weight:700; color:var(--text); direction:ltr; }
 
-.status-txt { font-size:11px; color:var(--text-hint); text-align:center; margin-top:4px; min-height:16px; }
-.last-upd { font-size:10px; color:var(--text-hint); text-align:center; margin-top:4px; }
-.nisab-note { font-size:11px; color:var(--text-hint); text-align:center; margin-top:10px; padding:6px; background:var(--gold-bg2); border-radius:var(--radius-sm); border:1px solid var(--border); }
-
+.stxt { font-size:11px; color:var(--text-hint); text-align:center; margin-top:4px; min-height:16px; }
+.lupd { font-size:10px; color:var(--text-hint); text-align:center; margin-top:4px; }
+.nnote { font-size:11px; color:var(--text-hint); text-align:center; margin-top:10px; padding:6px; background:var(--gold-bg2); border-radius:var(--radius-sm); border:1px solid var(--border); }
 .sync { display:inline-block; width:6px; height:6px; border-radius:50%; background:#4CAF50; margin-right:4px; vertical-align:middle; }
 .sync.on { background:var(--gold-light); animation:sp 1s infinite; }
-@keyframes sp { 0%,100%{opacity:1} 50%{opacity:.3} }
+@keyframes sp { 0%,100%{opacity:1}50%{opacity:.3} }
 </style>
 </head>
 <body>
 
-<!-- AUTH -->
+<!-- AUTH SCREEN -->
 <div class="auth-wrap" id="authWrap">
   <div class="auth-logo">⚜</div>
   <div class="auth-title">زكاة</div>
   <div class="auth-sub">تتبع ثروتك واحسب زكاتك</div>
   <div class="auth-card">
     <div class="auth-tabs">
-      <div class="auth-tab active" id="tLogin"  onclick="authTab('login')">دخول</div>
-      <div class="auth-tab"        id="tReg"    onclick="authTab('reg')">حساب جديد</div>
+      <div class="auth-tab active" id="tLogin" onclick="authTab('login')">دخول</div>
+      <div class="auth-tab"        id="tReg"   onclick="authTab('reg')">حساب جديد</div>
     </div>
     <div id="fLogin">
       <input class="auth-input" type="email"    id="lEmail" placeholder="البريد الإلكتروني" autocomplete="email">
@@ -147,7 +142,7 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--gol
   </div>
 </div>
 
-<!-- APP -->
+<!-- APP SCREEN -->
 <div class="app-wrap" id="appWrap">
   <div class="header">
     <div class="header-top">
@@ -156,7 +151,7 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--gol
         <div class="user-badge" id="userBadge">زائر</div>
       </div>
       <div class="hdr-btns">
-        <button class="hdr-btn" onclick="fetchRates()">↻ تحديث</button>
+        <button class="hdr-btn" onclick="fetchRates()">↻</button>
         <button class="hdr-btn" id="authBtn" onclick="toggleAuth()">دخول</button>
       </div>
     </div>
@@ -174,7 +169,6 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--gol
     <div class="tab"        onclick="showTab('zakat',this)">الزكاة</div>
   </div>
 
-  <!-- ASSETS -->
   <div class="section active" id="tab-assets">
     <div class="card">
       <div class="card-title"><span class="dot"></span> أدخل ما تملكه</div>
@@ -191,9 +185,8 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--gol
         <div class="input-group"><label>جنيه مصري</label><input type="number" id="iEGP" placeholder="0" min="0"></div>
       </div>
       <button class="save-btn" id="saveBtn" onclick="saveAssets()">💾 حفظ وحساب</button>
-      <div class="status-txt" id="saveStatus"></div>
+      <div class="stxt" id="saveSt"></div>
     </div>
-
     <div class="card" id="summaryCard" style="display:none">
       <div class="card-title"><span class="dot"></span> إجمالي ما تملكه</div>
       <div class="summary-grid">
@@ -209,11 +202,10 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--gol
           <div class="stat-unit">جنيه مصري</div>
         </div>
       </div>
-      <div class="last-upd" id="savedTime"></div>
+      <div class="lupd" id="savedTime"></div>
     </div>
   </div>
 
-  <!-- PRICES -->
   <div class="section" id="tab-prices">
     <div class="card">
       <div class="card-title"><span class="dot"></span> أسعار الذهب (جنيه/جرام)</div>
@@ -221,26 +213,25 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--gol
         <div class="gold-box"><div class="karat">عيار 24</div><div class="gprice" id="p24">--</div><div class="gunit">جنيه/جرام</div></div>
         <div class="gold-box"><div class="karat">عيار 21</div><div class="gprice" id="p21">--</div><div class="gunit">جنيه/جرام</div></div>
       </div>
-      <div class="status-txt" id="goldSt">جاري التحميل...</div>
+      <div class="stxt" id="goldSt">جاري التحميل...</div>
     </div>
     <div class="card">
       <div class="card-title"><span class="dot"></span> أسعار العملات (مقابل الجنيه)</div>
       <div class="rate-grid">
-        <div class="rate-box"><div class="flag">🇺🇸</div><div class="cname">دولار</div><div class="rval" id="rUSD">--</div></div>
-        <div class="rate-box"><div class="flag">🇪🇺</div><div class="cname">يورو</div><div class="rval" id="rEUR">--</div></div>
-        <div class="rate-box"><div class="flag">🇸🇦</div><div class="cname">ريال</div><div class="rval" id="rSAR">--</div></div>
-        <div class="rate-box"><div class="flag">🇪🇬</div><div class="cname">جنيه</div><div class="rval">1.00</div></div>
+        <div class="rate-box"><div class="rflag">🇺🇸</div><div class="rcname">دولار</div><div class="rval" id="rUSD">--</div></div>
+        <div class="rate-box"><div class="rflag">🇪🇺</div><div class="rcname">يورو</div><div class="rval" id="rEUR">--</div></div>
+        <div class="rate-box"><div class="rflag">🇸🇦</div><div class="rcname">ريال</div><div class="rval" id="rSAR">--</div></div>
+        <div class="rate-box"><div class="rflag">🇪🇬</div><div class="rcname">جنيه</div><div class="rval">1.00</div></div>
       </div>
-      <div class="status-txt" id="rateSt"></div>
-      <div class="last-upd"   id="lastUpd"></div>
+      <div class="stxt" id="rateSt"></div>
+      <div class="lupd"  id="lastUpd"></div>
     </div>
   </div>
 
-  <!-- ZAKAT -->
   <div class="section" id="tab-zakat">
     <div class="card">
       <div class="card-title"><span class="dot"></span> حساب الزكاة</div>
-      <div id="zakatContent"><div class="status-txt" style="padding:1rem 0">احفظ بياناتك أولاً</div></div>
+      <div id="zakatContent"><div class="stxt" style="padding:1rem 0">احفظ بياناتك أولاً</div></div>
     </div>
     <div class="card">
       <div class="card-title"><span class="dot"></span> معلومات</div>
@@ -254,104 +245,112 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--gol
   </div>
 </div>
 
-<!-- Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
-// ===== SUPABASE INIT =====
-const _supabase = supabase.createClient(
-  'https://dtzslosfmzfurgmuqfug.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0enNsb3NmbXpmdXJnbXVxZnVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzNDk4NzcsImV4cCI6MjEwMTkyNTg3N30.NlkAIuatLp912UdAlB3rDnKvxUtKjp-9HhfYdpILNqs'
-);
+// ===== FIREBASE =====
+firebase.initializeApp({
+  apiKey:            "AIzaSyAP6cb9HerGIdvaKqJtEZF4a4HVS4PpVqc",
+  authDomain:        "zakah-89cd7.firebaseapp.com",
+  projectId:         "zakah-89cd7",
+  storageBucket:     "zakah-89cd7.firebasestorage.app",
+  messagingSenderId: "764011796925",
+  appId:             "1:764011796925:web:2a61add92f1d79ddb29ad4"
+});
+const auth = firebase.auth();
+const db   = firebase.firestore();
 
 // ===== STATE =====
-let rates      = { USD:null, EUR:null, SAR:null };
-let gold       = { g24:null, g21:null };
-let assets     = null;
-let nisabDate  = null;
-let user       = null;
-let isGuest    = false;
-const NISAB    = 85;
+var rates     = { USD:null, EUR:null, SAR:null };
+var gold      = { g24:null, g21:null };
+var assets    = null;
+var nisabDate = null;
+var curUser   = null;
+var isGuest   = false;
+var NISAB     = 85;
 
-// ===== AUTH UI =====
+// ===== AUTH HELPERS =====
 function authTab(t) {
-  document.getElementById('fLogin').style.display = t==='login' ? 'block':'none';
-  document.getElementById('fReg').style.display   = t==='reg'   ? 'block':'none';
+  document.getElementById('fLogin').style.display = t==='login'?'block':'none';
+  document.getElementById('fReg').style.display   = t==='reg'  ?'block':'none';
   document.getElementById('tLogin').classList.toggle('active', t==='login');
   document.getElementById('tReg').classList.toggle('active',   t==='reg');
   document.getElementById('authErr').textContent = '';
 }
 
+function authErrAr(code) {
+  var m = {
+    'auth/invalid-credential':    'البريد أو كلمة المرور غلط',
+    'auth/user-not-found':        'البريد أو كلمة المرور غلط',
+    'auth/wrong-password':        'البريد أو كلمة المرور غلط',
+    'auth/email-already-in-use':  'البريد مستخدم بالفعل',
+    'auth/weak-password':         'كلمة المرور ضعيفة (6 أحرف+)',
+    'auth/invalid-email':         'البريد غير صحيح',
+    'auth/too-many-requests':     'محاولات كثيرة، حاول بعد قليل',
+    'auth/network-request-failed':'تحقق من الإنترنت',
+  };
+  return m[code] || 'حدث خطأ، حاول مجدداً';
+}
+
 function setAuthErr(msg) { document.getElementById('authErr').textContent = msg; }
 
-function authErrMsg(code) {
-  return {
-    'invalid_credentials':       'البريد أو كلمة المرور غلط',
-    'email_address_invalid':     'البريد غير صحيح',
-    'weak_password':             'كلمة المرور ضعيفة جداً',
-    'user_already_exists':       'البريد مستخدم بالفعل',
-    'email_not_confirmed':       'تحقق من بريدك لتفعيل الحساب',
-    'over_email_send_rate_limit':'انتظر قليلاً ثم حاول',
-  }[code] || 'حدث خطأ، حاول مجدداً';
-}
-
-async function doLogin() {
-  const email = document.getElementById('lEmail').value.trim();
-  const pass  = document.getElementById('lPass').value;
+window.doLogin = async function() {
+  var email = document.getElementById('lEmail').value.trim();
+  var pass  = document.getElementById('lPass').value;
   if (!email||!pass) { setAuthErr('أدخل البريد وكلمة المرور'); return; }
-  document.getElementById('lBtn').disabled = true;
-  document.getElementById('lBtn').textContent = '...';
-  const { error } = await _supabase.auth.signInWithPassword({ email, password: pass });
-  document.getElementById('lBtn').disabled = false;
-  document.getElementById('lBtn').textContent = 'دخول';
-  if (error) setAuthErr(authErrMsg(error.code||error.message));
-}
+  setAuthErr('');
+  var btn = document.getElementById('lBtn');
+  btn.disabled=true; btn.textContent='...';
+  try { await auth.signInWithEmailAndPassword(email, pass); }
+  catch(e) { setAuthErr(authErrAr(e.code)); }
+  btn.disabled=false; btn.textContent='دخول';
+};
 
-async function doRegister() {
-  const email = document.getElementById('rEmail').value.trim();
-  const pass  = document.getElementById('rPass').value;
-  const pass2 = document.getElementById('rPass2').value;
-  if (!email||!pass)  { setAuthErr('أدخل البريد وكلمة المرور'); return; }
-  if (pass!==pass2)   { setAuthErr('كلمتا المرور غير متطابقتين'); return; }
-  if (pass.length<6)  { setAuthErr('كلمة المرور 6 أحرف على الأقل'); return; }
-  document.getElementById('rBtn').disabled = true;
-  document.getElementById('rBtn').textContent = '...';
-  const { error } = await _supabase.auth.signUp({ email, password: pass });
-  document.getElementById('rBtn').disabled = false;
-  document.getElementById('rBtn').textContent = 'إنشاء حساب';
-  if (error) setAuthErr(authErrMsg(error.code||error.message));
-  else setAuthErr('✓ تحقق من بريدك لتفعيل الحساب');
-}
+window.doRegister = async function() {
+  var email = document.getElementById('rEmail').value.trim();
+  var pass  = document.getElementById('rPass').value;
+  var pass2 = document.getElementById('rPass2').value;
+  if (!email||!pass) { setAuthErr('أدخل البريد وكلمة المرور'); return; }
+  if (pass!==pass2)  { setAuthErr('كلمتا المرور غير متطابقتين'); return; }
+  if (pass.length<6) { setAuthErr('كلمة المرور 6 أحرف على الأقل'); return; }
+  setAuthErr('');
+  var btn = document.getElementById('rBtn');
+  btn.disabled=true; btn.textContent='...';
+  try { await auth.createUserWithEmailAndPassword(email, pass); }
+  catch(e) { setAuthErr(authErrAr(e.code)); }
+  btn.disabled=false; btn.textContent='إنشاء حساب';
+};
 
-function guestMode() {
+window.guestMode = function() {
   isGuest = true;
   showApp();
   loadLocal();
   if (assets) { fillInputs(); updateSummary(); updateZakat(); }
   fetchRates();
-}
+};
 
-function toggleAuth() {
-  if (user) {
-    _supabase.auth.signOut();
-  } else {
-    showAuthScreen();
-  }
-}
+window.toggleAuth = function() {
+  if (curUser) auth.signOut();
+  else { showAuth(); }
+};
 
 // ===== SCREENS =====
 function showApp() {
   document.getElementById('authWrap').style.display = 'none';
   document.getElementById('appWrap').style.display  = 'block';
 }
-function showAuthScreen() {
+function showAuth() {
   document.getElementById('authWrap').style.display = 'flex';
   document.getElementById('appWrap').style.display  = 'none';
+  isGuest = false;
 }
 
-// ===== SUPABASE AUTH LISTENER =====
-_supabase.auth.onAuthStateChange(async (event, session) => {
-  if (session && session.user) {
-    user    = session.user;
+// ===== AUTH STATE =====
+auth.onAuthStateChanged(async function(user) {
+  if (user) {
+    curUser = user;
     isGuest = false;
     document.getElementById('userBadge').textContent = user.email;
     document.getElementById('authBtn').textContent   = 'خروج';
@@ -360,93 +359,92 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
     if (assets) { fillInputs(); updateSummary(); updateZakat(); }
     fetchRates();
   } else {
-    if (!isGuest) {
-      user = null;
-      document.getElementById('authBtn').textContent = 'دخول';
-      document.getElementById('userBadge').textContent = 'زائر';
-      showAuthScreen();
-    }
+    curUser = null;
+    document.getElementById('authBtn').textContent   = 'دخول';
+    document.getElementById('userBadge').textContent = 'زائر';
+    if (!isGuest) showAuth();
   }
 });
 
-// ===== LOCAL STORAGE =====
+// ===== LOCAL STORAGE (guests) =====
 function loadLocal() {
   try {
-    const a = localStorage.getItem('zakat_assets');
-    const d = localStorage.getItem('zakat_nisab_date');
-    if (a) assets   = JSON.parse(a);
+    var a = localStorage.getItem('zakat_a');
+    var d = localStorage.getItem('zakat_d');
+    if (a) assets    = JSON.parse(a);
     if (d) nisabDate = d;
   } catch(e) {}
 }
 function saveLocal() {
   try {
-    localStorage.setItem('zakat_assets', JSON.stringify(assets));
-    if (nisabDate) localStorage.setItem('zakat_nisab_date', nisabDate);
-    else localStorage.removeItem('zakat_nisab_date');
+    localStorage.setItem('zakat_a', JSON.stringify(assets));
+    if (nisabDate) localStorage.setItem('zakat_d', nisabDate);
+    else           localStorage.removeItem('zakat_d');
   } catch(e) {}
 }
 
-// ===== SUPABASE DB =====
+// ===== FIRESTORE =====
 async function loadCloud() {
-  if (!user) return;
+  if (!curUser) return;
   setSyncing(true);
   try {
-    const { data, error } = await _supabase
-      .from('assets')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
-    if (data) {
-      assets   = { g24:data.g24||0, g21:data.g21||0, sar:data.sar||0, usd:data.usd||0, eur:data.eur||0, egp:data.egp||0, savedAt:data.updated_at };
-      nisabDate = data.nisab_date || null;
-      setStatus('✓ تم تحميل بياناتك', 3000);
+    var snap = await db.collection('users').doc(curUser.uid).get();
+    if (snap.exists) {
+      var d = snap.data();
+      assets = {
+        g24: d.g24||0, g21: d.g21||0,
+        sar: d.sar||0, usd: d.usd||0,
+        eur: d.eur||0, egp: d.egp||0,
+        savedAt: d.savedAt || new Date().toISOString()
+      };
+      nisabDate = d.nisabDate || null;
+      setSaveSt('✓ تم تحميل بياناتك', 3000);
     } else {
-      setStatus('لا توجد بيانات محفوظة بعد', 3000);
+      setSaveSt('لا توجد بيانات محفوظة بعد', 3000);
     }
-  } catch(e) { console.error(e); }
+  } catch(e) {
+    console.error('loadCloud:', e);
+    setSaveSt('خطأ في التحميل: ' + (e.code||e.message), 0);
+  }
   setSyncing(false);
 }
 
 async function saveCloud() {
-  if (!user || !assets) return;
+  if (!curUser || !assets) return;
   setSyncing(true);
-  const { error } = await _supabase.from('assets').upsert({
-    user_id:    user.id,
-    g24:        assets.g24,
-    g21:        assets.g21,
-    sar:        assets.sar,
-    usd:        assets.usd,
-    eur:        assets.eur,
-    egp:        assets.egp,
-    nisab_date: nisabDate || null,
-    updated_at: new Date().toISOString()
-  }, { onConflict: 'user_id' });
-  if (error) {
-    console.error(error);
-    setStatus('⚠ فشل الحفظ: ' + (error.message||error.code), 0);
+  try {
+    await db.collection('users').doc(curUser.uid).set({
+      g24: assets.g24, g21: assets.g21,
+      sar: assets.sar, usd: assets.usd,
+      eur: assets.eur, egp: assets.egp,
+      nisabDate: nisabDate || null,
+      savedAt:   assets.savedAt
+    });
+  } catch(e) {
+    console.error('saveCloud:', e);
+    setSaveSt('فشل الحفظ: ' + (e.code||e.message), 0);
   }
   setSyncing(false);
 }
 
 function setSyncing(on) {
   var d = document.getElementById('syncDot');
-  if (d) d.className = 'sync' + (on?' on':'');
+  if (d) d.className = 'sync'+(on?' on':'');
 }
-function setStatus(msg, ms) {
-  var el = document.getElementById('saveStatus');
+function setSaveSt(msg, ms) {
+  var el = document.getElementById('saveSt');
   if (!el) return;
   el.textContent = msg;
-  if (ms) setTimeout(()=>{ el.textContent=''; }, ms);
+  if (ms) setTimeout(function(){ el.textContent=''; }, ms);
 }
 
 // ===== RATES & GOLD =====
 window.fetchRates = async function() {
   document.getElementById('goldSt').textContent = 'جاري التحديث...';
-  // Exchange rates
-  let ok = false;
+  var ok = false;
   try {
-    const r = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json');
-    const d = await r.json();
+    var r = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json');
+    var d = await r.json();
     if (d.usd && d.usd.egp) {
       rates.USD = d.usd.egp; rates.EUR = d.usd.egp/d.usd.eur; rates.SAR = d.usd.egp/d.usd.sar;
       ok = true; document.getElementById('rateSt').textContent = ''; updateRatesUI();
@@ -454,46 +452,44 @@ window.fetchRates = async function() {
   } catch(e) {}
   if (!ok) {
     rates.USD=50.5; rates.EUR=55.8; rates.SAR=13.5;
-    document.getElementById('rateSt').textContent = 'أسعار تقريبية';
-    updateRatesUI();
+    document.getElementById('rateSt').textContent = 'أسعار تقريبية'; updateRatesUI();
   }
-  // Gold
-  let gok = false;
+  var gok = false;
   try {
-    const r = await fetch('https://api.gold-api.com/price/XAU');
-    const d = await r.json();
-    if (d && d.price) {
-      gold.g24 = (parseFloat(d.price)/31.1035)*rates.USD;
+    var r2 = await fetch('https://api.gold-api.com/price/XAU');
+    var d2 = await r2.json();
+    if (d2 && d2.price) {
+      gold.g24 = (parseFloat(d2.price)/31.1035)*rates.USD;
       gold.g21 = gold.g24*(21/24);
       gok = true; document.getElementById('goldSt').textContent = '';
     }
   } catch(e) {}
   if (!gok) {
     try {
-      const r = await fetch('https://api.metals.live/v1/spot/gold');
-      const d = await r.json();
-      const oz = Array.isArray(d)?d[0]?.gold:d?.price;
+      var r3 = await fetch('https://api.metals.live/v1/spot/gold');
+      var d3 = await r3.json();
+      var oz = Array.isArray(d3)?d3[0]?.gold:d3?.price;
       if (oz) { gold.g24=(parseFloat(oz)/31.1035)*rates.USD; gold.g21=gold.g24*(21/24); gok=true; document.getElementById('goldSt').textContent=''; }
     } catch(e) {}
   }
   if (!gok) { gold.g24=6691; gold.g21=5855; document.getElementById('goldSt').textContent='سعر تقريبي'; }
   updateGoldUI();
   if (assets) { updateSummary(); updateZakat(); }
-  document.getElementById('lastUpd').textContent = 'آخر تحديث: ' + new Date().toLocaleTimeString('ar-EG');
+  document.getElementById('lastUpd').textContent = 'آخر تحديث: '+new Date().toLocaleTimeString('ar-EG');
 };
 
 function updateRatesUI() {
-  document.getElementById('rUSD').textContent  = rates.USD ? rates.USD.toFixed(2):'--';
-  document.getElementById('rEUR').textContent  = rates.EUR ? rates.EUR.toFixed(2):'--';
-  document.getElementById('rSAR').textContent  = rates.SAR ? rates.SAR.toFixed(2):'--';
-  document.getElementById('phUSD').textContent = rates.USD ? rates.USD.toFixed(1):'--';
-  document.getElementById('phEUR').textContent = rates.EUR ? rates.EUR.toFixed(1):'--';
+  document.getElementById('rUSD').textContent  = rates.USD?rates.USD.toFixed(2):'--';
+  document.getElementById('rEUR').textContent  = rates.EUR?rates.EUR.toFixed(2):'--';
+  document.getElementById('rSAR').textContent  = rates.SAR?rates.SAR.toFixed(2):'--';
+  document.getElementById('phUSD').textContent = rates.USD?rates.USD.toFixed(1):'--';
+  document.getElementById('phEUR').textContent = rates.EUR?rates.EUR.toFixed(1):'--';
 }
 function updateGoldUI() {
-  document.getElementById('p24').textContent   = gold.g24 ? gold.g24.toFixed(0):'--';
-  document.getElementById('p21').textContent   = gold.g21 ? gold.g21.toFixed(0):'--';
-  document.getElementById('ph24').textContent  = gold.g24 ? gold.g24.toFixed(0):'--';
-  document.getElementById('ph21').textContent  = gold.g21 ? gold.g21.toFixed(0):'--';
+  document.getElementById('p24').textContent  = gold.g24?gold.g24.toFixed(0):'--';
+  document.getElementById('p21').textContent  = gold.g21?gold.g21.toFixed(0):'--';
+  document.getElementById('ph24').textContent = gold.g24?gold.g24.toFixed(0):'--';
+  document.getElementById('ph21').textContent = gold.g21?gold.g21.toFixed(0):'--';
 }
 
 // ===== ASSETS =====
@@ -510,12 +506,12 @@ window.saveAssets = async function() {
     savedAt: new Date().toISOString()
   };
   checkNisab();
-  if (user) {
+  if (curUser) {
     await saveCloud();
-    setStatus('✓ تم الحفظ في حسابك ☁', 3000);
+    setSaveSt('✓ تم الحفظ في حسابك ☁', 3000);
   } else {
     saveLocal();
-    setStatus('✓ تم الحفظ محلياً', 3000);
+    setSaveSt('✓ تم الحفظ محلياً', 3000);
   }
   updateSummary(); updateZakat();
   btn.disabled=false; btn.textContent='💾 حفظ وحساب';
@@ -540,9 +536,9 @@ function checkNisab() {
 
 function calcTotals() {
   if (!assets) return null;
-  var goldEGP = (assets.g24||0)*(gold.g24||0)+(assets.g21||0)*(gold.g21||0);
-  var cashEGP = (assets.sar||0)*(rates.SAR||13.5)+(assets.usd||0)*(rates.USD||50.5)+(assets.eur||0)*(rates.EUR||55.8)+(assets.egp||0);
-  return { goldEGP, cashEGP, total: goldEGP+cashEGP };
+  var gEGP = (assets.g24||0)*(gold.g24||0)+(assets.g21||0)*(gold.g21||0);
+  var cEGP = (assets.sar||0)*(rates.SAR||13.5)+(assets.usd||0)*(rates.USD||50.5)+(assets.eur||0)*(rates.EUR||55.8)+(assets.egp||0);
+  return { gEGP:gEGP, cEGP:cEGP, total:gEGP+cEGP };
 }
 
 function updateSummary() {
@@ -550,8 +546,8 @@ function updateSummary() {
   var t = calcTotals();
   document.getElementById('s24').textContent   = (assets.g24||0).toFixed(2);
   document.getElementById('s21').textContent   = (assets.g21||0).toFixed(2);
-  document.getElementById('sGold').textContent = Math.round(t.goldEGP).toLocaleString('ar-EG');
-  document.getElementById('sCash').textContent = Math.round(t.cashEGP).toLocaleString('ar-EG');
+  document.getElementById('sGold').textContent = Math.round(t.gEGP).toLocaleString('ar-EG');
+  document.getElementById('sCash').textContent = Math.round(t.cEGP).toLocaleString('ar-EG');
   document.getElementById('sTotal').textContent= Math.round(t.total).toLocaleString('ar-EG');
   document.getElementById('summaryCard').style.display='block';
   var d=new Date(assets.savedAt);
@@ -560,53 +556,42 @@ function updateSummary() {
 
 function updateZakat() {
   if (!assets) return;
-  var t      = calcTotals();
-  var t24    = (assets.g24||0)+((assets.g21||0)*21/24);
-  var nEGP   = NISAB*(gold.g24||0);
-  var elig   = t24>=NISAB;
-  var zamt   = elig ? t.total*0.025 : 0;
-  var pct    = Math.min((t24/NISAB)*100,100);
-  var html   = '';
+  var t    = calcTotals();
+  var t24  = (assets.g24||0)+((assets.g21||0)*21/24);
+  var nEGP = NISAB*(gold.g24||0);
+  var elig = t24>=NISAB;
+  var zamt = elig?t.total*0.025:0;
+  var pct  = Math.min((t24/NISAB)*100,100);
+  var html = '';
   if (elig) {
     var ds = nisabDate ? new Date(nisabDate).toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'}) : 'منذ آخر حفظ';
     html += '<div class="zakat-card yes">'
-      +'<div class="zakat-badge badge-y">✓ بلغت النصاب</div>'
-      +'<div class="zakat-title y">أنت مستحق للزكاة</div>'
-      +'<div class="zakat-sub">بلغت النصاب منذ: '+ds+'</div>'
-      +'<div class="zakat-sub">معادل ذهبك عيار 24: <b>'+t24.toFixed(2)+' جرام</b> (النصاب: '+NISAB+' جرام)</div>'
-      +'<div class="zakat-amt-row"><div class="zakat-amt-lbl">مقدار الزكاة (2.5%)</div>'
-      +'<div class="zakat-amt-val">'+Math.round(zamt).toLocaleString('ar-EG')+'</div>'
-      +'<div class="zakat-amt-unit">جنيه</div></div></div>';
+      +'<div class="zbadge by">✓ بلغت النصاب</div>'
+      +'<div class="zt y">أنت مستحق للزكاة</div>'
+      +'<div class="zs">بلغت النصاب منذ: '+ds+'</div>'
+      +'<div class="zs">معادل ذهبك عيار 24: <b>'+t24.toFixed(2)+' جرام</b> (النصاب: '+NISAB+' جرام)</div>'
+      +'<div class="zamtrow"><span style="font-size:12px;color:var(--text-muted)">مقدار الزكاة (2.5%)</span>'
+      +'<span style="font-size:20px;font-weight:700;color:var(--green);direction:ltr">'+Math.round(zamt).toLocaleString('ar-EG')+'</span>'
+      +'<span style="font-size:12px;color:var(--text-muted)">جنيه</span></div></div>';
   } else {
     html += '<div class="zakat-card no">'
-      +'<div class="zakat-badge badge-n">✗ لم تبلغ النصاب</div>'
-      +'<div class="zakat-title n">لست مستحقاً للزكاة حالياً</div>'
-      +'<div class="zakat-sub">معادل ذهبك عيار 24: '+t24.toFixed(2)+' جرام</div>'
-      +'<div class="zakat-sub">متبقي للنصاب: '+(NISAB-t24).toFixed(2)+' جرام</div></div>';
+      +'<div class="zbadge bn">✗ لم تبلغ النصاب</div>'
+      +'<div class="zt n">لست مستحقاً للزكاة حالياً</div>'
+      +'<div class="zs">معادل ذهبك عيار 24: '+t24.toFixed(2)+' جرام</div>'
+      +'<div class="zs">متبقي للنصاب: '+(NISAB-t24).toFixed(2)+' جرام</div></div>';
   }
   html += '<div class="bar-wrap"><div class="bar-lbl"><span>تقدمك نحو النصاب</span><span>'+pct.toFixed(1)+'%</span></div>'
-    +'<div class="bar-track"><div class="bar-fill '+(elig?'bar-y':'bar-n')+'" style="width:'+pct+'%"></div></div></div>';
-  if (nEGP) html += '<div class="nisab-note">قيمة النصاب الحالية: '+Math.round(nEGP).toLocaleString('ar-EG')+' جنيه</div>';
+    +'<div class="bar-track"><div class="bar-fill '+(elig?'by2':'bn2')+'" style="width:'+pct+'%"></div></div></div>';
+  if (nEGP) html += '<div class="nnote">قيمة النصاب الحالية: '+Math.round(nEGP).toLocaleString('ar-EG')+' جنيه</div>';
   document.getElementById('zakatContent').innerHTML = html;
 }
 
 window.showTab = function(name,el) {
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
   document.getElementById('tab-'+name).classList.add('active');
   el.classList.add('active');
 };
-
-// ===== INIT =====
-// Check existing session on load
-(async function() {
-  const { data: { session } } = await _supabase.auth.getSession();
-  if (!session) {
-    // No active session — show auth screen
-    showAuthScreen();
-  }
-  // onAuthStateChange will handle the rest
-})();
 </script>
 </body>
 </html>
