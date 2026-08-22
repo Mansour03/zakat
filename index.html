@@ -262,6 +262,23 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db   = firebase.firestore();
 
+// Keep the user signed in across page reloads / browser restarts.
+// LOCAL persistence survives closing the tab or the whole browser.
+// We set this up front, before the auth-state listener is attached,
+// so the very first onAuthStateChanged callback already reflects
+// whichever persistence mode succeeded.
+var authReady = auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+  .catch(function(e) {
+    console.error('setPersistence(LOCAL) failed, falling back to SESSION:', e);
+    // Some environments (private browsing, certain in-app browsers, or
+    // contexts where IndexedDB/localStorage is blocked) reject LOCAL.
+    // Fall back to SESSION so the app still works, just without
+    // persistence across full browser restarts.
+    return auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(function(e2){
+      console.error('setPersistence(SESSION) also failed:', e2);
+    });
+  });
+
 // ===== STATE =====
 var rates     = { USD:null, EUR:null, SAR:null };
 var gold      = { g24:null, g21:null };
@@ -303,7 +320,10 @@ window.doLogin = async function() {
   setAuthErr('');
   var btn = document.getElementById('lBtn');
   btn.disabled=true; btn.textContent='...';
-  try { await auth.signInWithEmailAndPassword(email, pass); }
+  try {
+    await authReady; // ensure persistence mode is set before signing in
+    await auth.signInWithEmailAndPassword(email, pass);
+  }
   catch(e) { setAuthErr(authErrAr(e.code)); }
   btn.disabled=false; btn.textContent='دخول';
 };
@@ -318,7 +338,10 @@ window.doRegister = async function() {
   setAuthErr('');
   var btn = document.getElementById('rBtn');
   btn.disabled=true; btn.textContent='...';
-  try { await auth.createUserWithEmailAndPassword(email, pass); }
+  try {
+    await authReady; // ensure persistence mode is set before signing up
+    await auth.createUserWithEmailAndPassword(email, pass);
+  }
   catch(e) { setAuthErr(authErrAr(e.code)); }
   btn.disabled=false; btn.textContent='إنشاء حساب';
 };
