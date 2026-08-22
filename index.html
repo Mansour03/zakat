@@ -240,6 +240,9 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--gol
         <p>• <b>عيار 21:</b> يتحول تلقائياً (×21/24)</p>
         <p>• <b>مقدار الزكاة:</b> 2.5% من إجمالي الثروة</p>
         <p>• <b>الزكاة تشمل:</b> الذهب (ادخار وزينة) + النقود</p>
+        <p>• <b>الحول:</b> لازم يفضل معاك النصاب سنة هجرية كاملة (~354 يوم) من أول يوم بلغت فيه النصاب</p>
+        <p>• <b>لو نزلت تحت النصاب</b> في أي وقت خلال السنة، الحول بيتصفر ولازم يبدأ من جديد لما تبلغ النصاب تاني</p>
+        <p>• <b>عند تمام الحول</b> بتدفع 2.5% من إجمالي ثروتك وقتها (مش وقت ما بلغت النصاب)</p>
       </div>
     </div>
   </div>
@@ -583,6 +586,25 @@ function updateSummary() {
   document.getElementById('savedTime').textContent='آخر تعديل: '+d.toLocaleDateString('ar-EG')+' '+d.toLocaleTimeString('ar-EG');
 }
 
+// A hawl (زكاة waiting period) is one full lunar/Hijri year, ~354 days —
+// shorter than a Gregorian year by about 10-11 days. We approximate it
+// as 354 days since we don't have a Hijri calendar library available.
+var HAWL_DAYS = 354;
+
+// Formats a date showing both the Gregorian and Hijri (Umm al-Qura) date,
+// e.g. "15 مايو 2025 م — 17 ذو القعدة 1446 هـ".
+// Falls back to Gregorian-only if the browser doesn't support the
+// islamic-umalqura calendar.
+function formatDateDual(date) {
+  var greg = date.toLocaleDateString('ar-EG', {year:'numeric', month:'long', day:'numeric'});
+  try {
+    var hijri = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', {year:'numeric', month:'long', day:'numeric'}).format(date);
+    return greg + ' م — ' + hijri + ' هـ';
+  } catch(e) {
+    return greg + ' م';
+  }
+}
+
 function updateZakat() {
   if (!assets) return;
   var t    = calcTotals();
@@ -594,15 +616,33 @@ function updateZakat() {
   var pct  = nEGP > 0 ? Math.min((t.total/nEGP)*100, 100) : 0;
   var html = '';
   if (elig) {
-    var ds = nisabDate ? new Date(nisabDate).toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'}) : 'منذ آخر حفظ';
+    var startDate = nisabDate ? new Date(nisabDate) : new Date();
+    var ds = formatDateDual(startDate);
+    var dueDate = new Date(startDate.getTime() + HAWL_DAYS*24*60*60*1000);
+    var dueStr  = formatDateDual(dueDate);
+    var msLeft   = dueDate.getTime() - Date.now();
+    var daysLeft = Math.ceil(msLeft/(24*60*60*1000));
+    var hawlDone = msLeft <= 0;
+
     html += '<div class="zakat-card yes">'
       +'<div class="zbadge by">✓ بلغت النصاب</div>'
       +'<div class="zt y">أنت مستحق للزكاة</div>'
-      +'<div class="zs">بلغت النصاب منذ: '+ds+'</div>'
-      +'<div class="zs">ثروتك: <b>'+Math.round(t.total).toLocaleString("ar-EG")+' جنيه</b> — النصاب: '+Math.round(nEGP).toLocaleString("ar-EG")+' جنيه</div>'
-      +'<div class="zamtrow"><span style="font-size:12px;color:var(--text-muted)">مقدار الزكاة (2.5%)</span>'
+      +'<div class="zs">بلغت النصاب منذ: '+ds+' (بداية الحول)</div>'
+      +'<div class="zs">ثروتك الآن: <b>'+Math.round(t.total).toLocaleString("ar-EG")+' جنيه</b> — النصاب: '+Math.round(nEGP).toLocaleString("ar-EG")+' جنيه</div>';
+
+    if (hawlDone) {
+      html += '<div style="margin-top:10px;padding:8px 10px;background:rgba(46,125,50,0.15);border-radius:8px;font-size:12px;color:var(--green);text-align:center;font-weight:700">'
+        +'🔔 تم الحول الكامل (سنة هجرية) — زكاتك مستحقة الدفع الآن</div>';
+    } else {
+      html += '<div class="zs">تاريخ استحقاق الزكاة (تمام الحول): <b>'+dueStr+'</b></div>'
+        +'<div class="zs">متبقٍ على الاستحقاق: <b>'+daysLeft+' يوم</b></div>';
+    }
+
+    html += '<div class="zamtrow"><span style="font-size:12px;color:var(--text-muted)">'+(hawlDone?'مقدار الزكاة المستحقة الآن (2.5%)':'المقدار المتوقع حالياً لو استمر الحول (2.5%)')+'</span>'
       +'<span style="font-size:20px;font-weight:700;color:var(--green);direction:ltr">'+Math.round(zamt).toLocaleString('ar-EG')+'</span>'
-      +'<span style="font-size:12px;color:var(--text-muted)">جنيه</span></div></div>';
+      +'<span style="font-size:12px;color:var(--text-muted)">جنيه</span></div>'
+      +'<div class="stxt" style="margin-top:6px">هذا المبلغ بيتحدث تلقائياً كل ما تعدّل بياناتك أو تتغير الأسعار، وهيبقى نهائي في تاريخ الاستحقاق</div>'
+      +'</div>';
   } else {
     html += '<div class="zakat-card no">'
       +'<div class="zbadge bn">✗ لم تبلغ النصاب</div>'
