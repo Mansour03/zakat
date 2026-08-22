@@ -529,9 +529,15 @@ function fillInputs() {
 
 function checkNisab() {
   if (!assets) return;
-  var t = (assets.g24||0)+((assets.g21||0)*21/24);
-  if (t>=NISAB) { if (!nisabDate) nisabDate=new Date().toISOString(); }
-  else nisabDate=null;
+  // Compare total wealth in EGP vs nisab value in EGP
+  var nisabEGP = NISAB * (gold.g24 || 0);
+  var t = calcTotals();
+  var totalEGP = t ? t.total : 0;
+  if (nisabEGP > 0 && totalEGP >= nisabEGP) {
+    if (!nisabDate) nisabDate = new Date().toISOString();
+  } else {
+    nisabDate = null;
+  }
 }
 
 function calcTotals() {
@@ -559,9 +565,10 @@ function updateZakat() {
   var t    = calcTotals();
   var t24  = (assets.g24||0)+((assets.g21||0)*21/24);
   var nEGP = NISAB*(gold.g24||0);
-  var elig = t24>=NISAB;
+  // Correct: compare total wealth in EGP vs nisab value in EGP
+  var elig = nEGP > 0 && t.total >= nEGP;
   var zamt = elig?t.total*0.025:0;
-  var pct  = Math.min((t24/NISAB)*100,100);
+  var pct  = nEGP > 0 ? Math.min((t.total/nEGP)*100, 100) : 0;
   var html = '';
   if (elig) {
     var ds = nisabDate ? new Date(nisabDate).toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'}) : 'منذ آخر حفظ';
@@ -569,7 +576,7 @@ function updateZakat() {
       +'<div class="zbadge by">✓ بلغت النصاب</div>'
       +'<div class="zt y">أنت مستحق للزكاة</div>'
       +'<div class="zs">بلغت النصاب منذ: '+ds+'</div>'
-      +'<div class="zs">معادل ذهبك عيار 24: <b>'+t24.toFixed(2)+' جرام</b> (النصاب: '+NISAB+' جرام)</div>'
+      +'<div class="zs">ثروتك: <b>'+Math.round(t.total).toLocaleString("ar-EG")+' جنيه</b> — النصاب: '+Math.round(nEGP).toLocaleString("ar-EG")+' جنيه</div>'
       +'<div class="zamtrow"><span style="font-size:12px;color:var(--text-muted)">مقدار الزكاة (2.5%)</span>'
       +'<span style="font-size:20px;font-weight:700;color:var(--green);direction:ltr">'+Math.round(zamt).toLocaleString('ar-EG')+'</span>'
       +'<span style="font-size:12px;color:var(--text-muted)">جنيه</span></div></div>';
