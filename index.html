@@ -16,8 +16,13 @@
 }
 body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--gold-bg); color: var(--text); min-height: 100vh; max-width: 440px; margin: 0 auto; padding-bottom: 2rem; }
 
+/* LOADING */
+.loading-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; background:linear-gradient(160deg,#3D2A00 0%,#6B4800 60%,#3D2A00 100%); }
+.loading-logo { font-size:52px; margin-bottom:14px; opacity:0.9; animation:pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:0.5; transform:scale(0.96)} 50%{opacity:1; transform:scale(1)} }
+
 /* AUTH */
-.auth-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:2rem 1.5rem; background:linear-gradient(160deg,#3D2A00 0%,#6B4800 60%,#3D2A00 100%); }
+.auth-wrap { display:none; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:2rem 1.5rem; background:linear-gradient(160deg,#3D2A00 0%,#6B4800 60%,#3D2A00 100%); }
 .auth-logo { font-size:52px; margin-bottom:8px; text-align:center; }
 .auth-title { font-size:28px; font-weight:700; color:var(--gold-light); letter-spacing:3px; margin-bottom:4px; }
 .auth-sub { font-size:13px; color:rgba(240,192,64,0.6); margin-bottom:2rem; }
@@ -116,6 +121,11 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--gol
 </head>
 <body>
 
+<!-- LOADING SCREEN (shown until we know whether the user is logged in) -->
+<div class="loading-wrap" id="loadingWrap">
+  <div class="loading-logo">⚜</div>
+</div>
+
 <!-- AUTH SCREEN -->
 <div class="auth-wrap" id="authWrap">
   <div class="auth-logo">⚜</div>
@@ -183,6 +193,11 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--gol
       <div class="input-row">
         <div class="input-group"><label>يورو</label><input type="number" id="iEUR" placeholder="0" min="0"></div>
         <div class="input-group"><label>جنيه مصري</label><input type="number" id="iEGP" placeholder="0" min="0"></div>
+      </div>
+      <div class="input-group" style="margin-bottom:10px">
+        <label>تاريخ دخولك النصاب (اختياري)</label>
+        <input type="date" id="nisabDateInput">
+        <div class="stxt" style="text-align:right;margin-top:2px">لو النصاب معاك من زمان، حدد التاريخ هنا وهيحسب الحول منه. سيبها فاضية عشان يحسبها تلقائياً من أول يوم تدخل بياناتك وتبلغ النصاب. <span style="text-decoration:underline;cursor:pointer;color:var(--gold-dark)" onclick="resetNisabStart()">إعادة الحساب من النهاردة</span></div>
       </div>
       <button class="save-btn" id="saveBtn" onclick="saveAssets()">💾 حفظ وحساب</button>
       <div class="stxt" id="saveSt"></div>
@@ -351,6 +366,7 @@ window.doRegister = async function() {
 
 window.guestMode = function() {
   isGuest = true;
+  try { localStorage.setItem('zakat_guest','1'); } catch(e) {}
   showApp();
   loadLocal();
   if (assets) { fillInputs(); updateSummary(); updateZakat(); }
@@ -359,15 +375,24 @@ window.guestMode = function() {
 
 window.toggleAuth = function() {
   if (curUser) auth.signOut();
-  else { showAuth(); }
+  else {
+    try { localStorage.removeItem('zakat_guest'); } catch(e) {}
+    showAuth();
+  }
 };
 
 // ===== SCREENS =====
+function hideLoading() {
+  var l = document.getElementById('loadingWrap');
+  if (l) l.style.display = 'none';
+}
 function showApp() {
+  hideLoading();
   document.getElementById('authWrap').style.display = 'none';
   document.getElementById('appWrap').style.display  = 'block';
 }
 function showAuth() {
+  hideLoading();
   document.getElementById('authWrap').style.display = 'flex';
   document.getElementById('appWrap').style.display  = 'none';
   isGuest = false;
@@ -378,6 +403,7 @@ auth.onAuthStateChanged(async function(user) {
   if (user) {
     curUser = user;
     isGuest = false;
+    try { localStorage.removeItem('zakat_guest'); } catch(e) {}
     document.getElementById('userBadge').textContent = user.email;
     document.getElementById('authBtn').textContent   = 'خروج';
     showApp();
@@ -551,6 +577,15 @@ function fillInputs() {
   document.getElementById('iUSD').value = assets.usd||'';
   document.getElementById('iEUR').value = assets.eur||'';
   document.getElementById('iEGP').value = assets.egp||'';
+  var ndInput = document.getElementById('nisabDateInput');
+  if (ndInput) ndInput.value = nisabDate ? toLocalDateInputValue(new Date(nisabDate)) : '';
+}
+
+function toLocalDateInputValue(dateObj) {
+  var y = dateObj.getFullYear();
+  var m = String(dateObj.getMonth()+1).padStart(2,'0');
+  var d = String(dateObj.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+d;
 }
 
 function checkNisab() {
@@ -559,12 +594,35 @@ function checkNisab() {
   var nisabEGP = NISAB * (gold.g24 || 0);
   var t = calcTotals();
   var totalEGP = t ? t.total : 0;
+  var manualField = document.getElementById('nisabDateInput');
+  var manualVal   = manualField ? manualField.value : '';
   if (nisabEGP > 0 && totalEGP >= nisabEGP) {
-    if (!nisabDate) nisabDate = new Date().toISOString();
+    if (manualVal) {
+      // User explicitly told us when they first reached nisab — respect it,
+      // even if it overwrites a previously auto-detected date.
+      var d = new Date(manualVal + 'T00:00:00');
+      if (!isNaN(d.getTime())) nisabDate = d.toISOString();
+    } else if (!nisabDate) {
+      // No override given and hawl not already running: start it today,
+      // i.e. the day the data was entered.
+      nisabDate = new Date().toISOString();
+    }
+    // else: field left empty but a hawl is already running — keep it as is,
+    // so saving again doesn't reset the countdown.
   } else {
     nisabDate = null;
   }
 }
+
+window.resetNisabStart = async function() {
+  nisabDate = null;
+  var f = document.getElementById('nisabDateInput');
+  if (f) f.value = '';
+  if (!assets) return;
+  checkNisab(); // re-starts the hawl from today, since assets already meet nisab (if they do)
+  if (curUser) { await saveCloud(); } else { saveLocal(); }
+  updateSummary(); updateZakat();
+};
 
 function calcTotals() {
   if (!assets) return null;
@@ -662,6 +720,16 @@ window.showTab = function(name,el) {
   document.getElementById('tab-'+name).classList.add('active');
   el.classList.add('active');
 };
+
+// Returning guest (no account): skip the login screen entirely and go
+// straight into the app, the same way a remembered account login would.
+// Placed at the end of the script so every function it depends on
+// (fetchRates, loadLocal, updateSummary, updateZakat...) already exists.
+try {
+  if (localStorage.getItem('zakat_guest') === '1') {
+    guestMode();
+  }
+} catch(e) {}
 </script>
 </body>
 </html>
