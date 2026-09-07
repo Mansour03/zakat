@@ -118,6 +118,7 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--gol
 .stxt { font-size:11px; color:var(--text-hint); text-align:center; margin-top:4px; min-height:16px; }
 .lupd { font-size:10px; color:var(--text-hint); text-align:center; margin-top:4px; }
 .nnote { font-size:11px; color:var(--text-hint); text-align:center; margin-top:10px; padding:6px; background:var(--gold-bg2); border-radius:var(--radius-sm); border:1px solid var(--border); }
+.price-warning { font-size:12px; font-weight:600; color:var(--red); text-align:center; margin-top:8px; padding:8px 10px; background:var(--red-bg); border:1px solid rgba(192,57,43,0.35); border-radius:var(--radius-sm); }
 .sync { display:inline-block; width:6px; height:6px; border-radius:50%; background:#4CAF50; margin-right:4px; vertical-align:middle; }
 .sync.on { background:var(--gold-light); animation:sp 1s infinite; }
 @keyframes sp { 0%,100%{opacity:1}50%{opacity:.3} }
@@ -253,6 +254,7 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--gol
         <div class="gold-box"><div class="karat" data-i18n="stat_21">عيار 21</div><div class="gprice" id="p21">--</div><div class="gunit" data-i18n="unit_egp_gram">جنيه/جرام</div></div>
       </div>
       <div class="stxt" id="goldSt" data-i18n="loading_dots">جاري التحميل...</div>
+      <div class="price-warning" id="priceWarning" style="display:none"></div>
     </div>
     <div class="card">
       <div class="card-title"><span class="dot"></span> <span data-i18n="card_currency_rates">أسعار العملات (مقابل الجنيه)</span></div>
@@ -412,8 +414,8 @@ var I18N = {
   save_error:      { ar:'فشل الحفظ: ', en:'Save failed: ' },
   last_edited:     { ar:'آخر تعديل:', en:'Last edited:' },
   updating:        { ar:'جاري التحديث...', en:'Updating...' },
-  approx_prices:   { ar:'أسعار تقريبية', en:'Approximate rates' },
-  approx_price:    { ar:'سعر تقريبي', en:'Approximate price' },
+  price_warning_stale: { ar:'تعذر تحديث الأسعار الآن — المعروض من آخر تحديث ناجح بتاريخ:', en:'Could not refresh live prices — showing the last successful update from:' },
+  price_warning_never: { ar:'⚠️ تعذر الوصول لأي مصدر أسعار حالياً، والرقم المعروض تقديري فقط وقد يختلف كثيراً عن السعر الفعلي', en:'⚠️ Could not reach any price source right now — the number shown is a rough estimate and may differ a lot from the real price' },
   last_update:     { ar:'آخر تحديث:', en:'Last update:' },
 
   badge_reached_nisab: { ar:'✓ بلغت النصاب', en:'✓ Nisab reached' },
@@ -703,8 +705,7 @@ window.fetchRates = async function(forceRefresh) {
   if (!forceRefresh && cache && (Date.now() - cache.ts) < RATES_CACHE_TTL) {
     rates = cache.rates; gold = cache.gold;
     updateRatesUI(); updateGoldUI();
-    document.getElementById('goldSt').textContent = '';
-    document.getElementById('rateSt').textContent = '';
+    setPriceWarning(false);
     document.getElementById('lastUpd').textContent = t('last_update')+' '+new Date(cache.ts).toLocaleTimeString(locale());
     if (assets) { updateSummary(); updateZakat(); }
     return;
@@ -712,48 +713,96 @@ window.fetchRates = async function(forceRefresh) {
 
   document.getElementById('goldSt').textContent = t('updating');
 
-  // Fetch currency and gold prices in parallel instead of one-after-another —
-  // roughly halves the time each visitor waits, and each request goes
-  // directly from their own browser to the provider (no shared server to overload).
-  var ratesPromise = fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json')
-    .then(function(r){ return r.json(); }).catch(function(){ return null; });
-  var goldPromise = fetch('https://api.gold-api.com/price/XAU')
-    .then(function(r){ return r.json(); }).catch(function(){ return null; });
+  // Currency and gold-spot are fetched in parallel (independent of each other),
+  // and each one internally tries several providers in order before giving up —
+  // so one flaky/rate-limited API no longer takes the whole app down.
+  var results = await Promise.all([fetchCurrencyRates(), fetchGoldSpotUSD()]);
+  var curRes = results[0], goldRes = results[1];
 
-  var results = await Promise.all([ratesPromise, goldPromise]);
-  var d = results[0], d2 = results[1];
+  var usedStale = false;
 
-  var ok = false;
-  if (d && d.usd && d.usd.egp) {
-    rates.USD = d.usd.egp; rates.EUR = d.usd.egp/d.usd.eur; rates.SAR = d.usd.egp/d.usd.sar;
-    ok = true; document.getElementById('rateSt').textContent = ''; updateRatesUI();
+  if (curRes) {
+    rates.USD = curRes.USD; rates.EUR = curRes.EUR; rates.SAR = curRes.SAR;
+  } else if (cache && cache.rates && cache.rates.USD) {
+    // Reuse the last successfully fetched rate instead of a frozen guess —
+    // it's always closer to reality than a number written into the code long ago.
+    rates = cache.rates; usedStale = true;
+  } else {
+    rates.USD=50.5; rates.EUR=55.8; rates.SAR=13.5; usedStale = true;
   }
-  if (!ok) {
-    rates.USD=50.5; rates.EUR=55.8; rates.SAR=13.5;
-    document.getElementById('rateSt').textContent = t('approx_prices'); updateRatesUI();
-  }
+  updateRatesUI();
 
-  var gok = false;
-  if (d2 && d2.price) {
-    gold.g24 = (parseFloat(d2.price)/31.1035)*rates.USD;
+  if (goldRes && goldRes.oz && rates.USD) {
+    gold.g24 = (goldRes.oz/31.1035)*rates.USD;
     gold.g21 = gold.g24*(21/24);
-    gok = true; document.getElementById('goldSt').textContent = '';
+  } else if (cache && cache.gold && cache.gold.g24) {
+    gold = cache.gold; usedStale = true;
+  } else {
+    gold.g24=6691; gold.g21=5855; usedStale = true;
   }
-  if (!gok) {
-    try {
-      var r3 = await fetch('https://api.metals.live/v1/spot/gold');
-      var d3 = await r3.json();
-      var oz = Array.isArray(d3)?d3[0]?.gold:d3?.price;
-      if (oz) { gold.g24=(parseFloat(oz)/31.1035)*rates.USD; gold.g21=gold.g24*(21/24); gok=true; document.getElementById('goldSt').textContent=''; }
-    } catch(e) {}
-  }
-  if (!gok) { gold.g24=6691; gold.g21=5855; document.getElementById('goldSt').textContent=t('approx_price'); }
-
   updateGoldUI();
+  document.getElementById('goldSt').textContent = '';
+
+  setPriceWarning(usedStale, cache ? cache.ts : null);
+
   if (assets) { updateSummary(); updateZakat(); }
   document.getElementById('lastUpd').textContent = t('last_update')+' '+new Date().toLocaleTimeString(locale());
-  saveRatesCache();
+  // Only stamp the cache as "fresh" when we actually got a live price this time —
+  // otherwise we'd be lying to the next 5-minute cache check about how current it is.
+  if (!usedStale) saveRatesCache();
 };
+
+function setPriceWarning(stale, lastGoodTs) {
+  var el = document.getElementById('priceWarning');
+  if (!el) return;
+  if (!stale) { el.style.display = 'none'; el.textContent = ''; return; }
+  el.style.display = 'block';
+  el.textContent = lastGoodTs
+    ? t('price_warning_stale') + ' ' + new Date(lastGoodTs).toLocaleString(locale())
+    : t('price_warning_never');
+}
+
+// Small helper: fetch JSON with a timeout, so one slow/hanging provider
+// doesn't stall the whole price refresh — we just move on to the next one.
+function fetchJsonWithTimeout(url, ms) {
+  var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  var id = controller ? setTimeout(function(){ controller.abort(); }, ms || 6000) : null;
+  return fetch(url, controller ? { signal: controller.signal } : {})
+    .then(function(r){ if (id) clearTimeout(id); return r.ok ? r.json() : null; })
+    .catch(function(){ if (id) clearTimeout(id); return null; });
+}
+
+// Currency: try a broad-coverage community feed first, then a dedicated
+// no-key exchange-rate API as backup, before giving up.
+async function fetchCurrencyRates() {
+  var d = await fetchJsonWithTimeout('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json', 6000);
+  if (d && d.usd && d.usd.egp) {
+    return { USD: d.usd.egp, EUR: d.usd.egp/d.usd.eur, SAR: d.usd.egp/d.usd.sar };
+  }
+  var d2 = await fetchJsonWithTimeout('https://open.er-api.com/v6/latest/USD', 6000);
+  if (d2 && d2.rates && d2.rates.EGP) {
+    return { USD: d2.rates.EGP, EUR: d2.rates.EGP/d2.rates.EUR, SAR: d2.rates.EGP/d2.rates.SAR };
+  }
+  return null;
+}
+
+// Gold spot price (XAU/USD per troy ounce): try three independent providers
+// in order. If the first is rate-limited or down, the next one covers it,
+// so we very rarely fall through to the last-resort hardcoded number.
+async function fetchGoldSpotUSD() {
+  var d = await fetchJsonWithTimeout('https://api.gold-api.com/price/XAU', 6000);
+  if (d && d.price) return { oz: parseFloat(d.price) };
+
+  var d2 = await fetchJsonWithTimeout('https://data-asg.goldprice.org/dbXRates/USD', 6000);
+  if (d2 && d2.items && d2.items[0] && d2.items[0].xauPrice) return { oz: parseFloat(d2.items[0].xauPrice) };
+
+  var d3 = await fetchJsonWithTimeout('https://api.metals.live/v1/spot/gold', 6000);
+  if (d3) {
+    var oz = Array.isArray(d3) ? (d3[0] && d3[0].gold) : d3.price;
+    if (oz) return { oz: parseFloat(oz) };
+  }
+  return null;
+}
 
 function updateRatesUI() {
   document.getElementById('rUSD').textContent  = rates.USD?rates.USD.toFixed(2):'--';
