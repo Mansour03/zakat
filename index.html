@@ -121,6 +121,23 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--gol
 .sync { display:inline-block; width:6px; height:6px; border-radius:50%; background:#4CAF50; margin-right:4px; vertical-align:middle; }
 .sync.on { background:var(--gold-light); animation:sp 1s infinite; }
 @keyframes sp { 0%,100%{opacity:1}50%{opacity:.3} }
+
+/* DESKTOP / LARGE SCREENS — auto-detected, no manual switch needed.
+   Below this width the phone layout (single column, tabs) stays as-is.
+   Above it, all three sections show at once side by side like a dashboard,
+   and the page stops looking like a stretched phone screen. */
+@media (min-width: 900px) {
+  body { max-width: 1180px; padding: 0 1.5rem 2.5rem; }
+  .header { border-radius: 0 0 var(--radius) var(--radius); }
+  .tabs { display:none; }
+  .sections-wrap { display:grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; align-items:start; padding: 1.25rem 0; }
+  .section { display:block !important; padding: 0; }
+  .card { padding: 1.25rem 1.4rem; }
+  .auth-card { max-width: 380px; }
+}
+@media (min-width: 1300px) {
+  body { max-width: 1320px; }
+}
 </style>
 </head>
 <body>
@@ -185,6 +202,7 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--gol
     <div class="tab"        onclick="showTab('zakat',this)"  data-i18n="tab_zakat">الزكاة</div>
   </div>
 
+  <div class="sections-wrap">
   <div class="section active" id="tab-assets">
     <div class="card">
       <div class="card-title"><span class="dot"></span> <span data-i18n="card_enter_assets">أدخل ما تملكه</span></div>
@@ -260,12 +278,12 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--gol
         <p data-i18n="info_1">• <b>النصاب:</b> 85 جرام ذهب عيار 24</p>
         <p data-i18n="info_2">• <b>عيار 21:</b> يتحول تلقائياً (×21/24)</p>
         <p data-i18n="info_3">• <b>مقدار الزكاة:</b> 2.5% من إجمالي الثروة</p>
-        <p data-i18n="info_4">• <b>الزكاة تشمل:</b> الذهب (ادخار وزينة) + النقود</p>
         <p data-i18n="info_5">• <b>الحول:</b> لازم يفضل معاك النصاب سنة هجرية كاملة (~354 يوم) من أول يوم بلغت فيه النصاب</p>
         <p data-i18n="info_6">• <b>لو نزلت تحت النصاب</b> في أي وقت خلال السنة، الحول بيتصفر ولازم يبدأ من جديد لما تبلغ النصاب تاني</p>
         <p data-i18n="info_7">• <b>عند تمام الحول</b> بتدفع 2.5% من إجمالي ثروتك وقتها (مش وقت ما بلغت النصاب)</p>
       </div>
     </div>
+  </div>
   </div>
 </div>
 
@@ -364,7 +382,6 @@ var I18N = {
   info_1: { ar:'• <b>النصاب:</b> 85 جرام ذهب عيار 24', en:'• <b>Nisab:</b> 85 grams of 24K gold' },
   info_2: { ar:'• <b>عيار 21:</b> يتحول تلقائياً (×21/24)', en:'• <b>21K gold:</b> converted automatically (×21/24)' },
   info_3: { ar:'• <b>مقدار الزكاة:</b> 2.5% من إجمالي الثروة', en:'• <b>Zakat rate:</b> 2.5% of total wealth' },
-  info_4: { ar:'• <b>الزكاة تشمل:</b> الذهب (ادخار وزينة) + النقود', en:'• <b>Zakat covers:</b> gold (savings and jewelry) + cash' },
   info_5: { ar:'• <b>الحول:</b> لازم يفضل معاك النصاب سنة هجرية كاملة (~354 يوم) من أول يوم بلغت فيه النصاب', en:'• <b>Hawl:</b> you must keep the Nisab for one full lunar year (~354 days) from the first day you reached it' },
   info_6: { ar:'• <b>لو نزلت تحت النصاب</b> في أي وقت خلال السنة، الحول بيتصفر ولازم يبدأ من جديد لما تبلغ النصاب تاني', en:'• <b>If you drop below Nisab</b> at any point during the year, the hawl resets and must start over once you reach Nisab again' },
   info_7: { ar:'• <b>عند تمام الحول</b> بتدفع 2.5% من إجمالي ثروتك وقتها (مش وقت ما بلغت النصاب)', en:'• <b>Once the hawl completes</b> you pay 2.5% of your total wealth at that point (not when you first reached Nisab)' },
