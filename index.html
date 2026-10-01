@@ -1,3 +1,9 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>زكاة</title>
 <style>
 /* ===== VAULT THEME — calm steel + brass. Variable NAMES kept so the JS/HTML keep working. ===== */
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -143,7 +149,7 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
 .sync.on { background:var(--gold-light); animation:sp 1s infinite; }
 @keyframes sp { 0%,100%{opacity:1}50%{opacity:.3} }
 
-/* DESKTOP: three sections side by side (same logic as before) */
+/* DESKTOP: three sections side by side */
 @media (min-width: 900px) {
   body { max-width: 1180px; padding: 0 1.5rem 2.5rem; }
   .header { border-radius: 0 0 var(--radius) var(--radius); }
@@ -155,3 +161,822 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
 }
 @media (min-width: 1300px) { body { max-width: 1320px; } }
 </style>
+</head>
+<body>
+
+<!-- LOADING SCREEN (shown until we know whether the user is logged in) -->
+<div class="loading-wrap" id="loadingWrap">
+  <div class="loading-logo">⚜</div>
+</div>
+
+<!-- AUTH SCREEN -->
+<div class="auth-wrap" id="authWrap">
+  <div class="lang-toggle-auth"><button class="lang-btn" id="langBtnAuth" onclick="toggleLang()">EN</button></div>
+  <div class="auth-logo">⚜</div>
+  <div class="auth-title" data-i18n="auth_title">زكاة</div>
+  <div class="auth-sub" data-i18n="auth_sub">تتبع ثروتك واحسب زكاتك</div>
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tLogin" onclick="authTab('login')" data-i18n="tab_login">دخول</div>
+      <div class="auth-tab"        id="tReg"   onclick="authTab('reg')"   data-i18n="tab_register">حساب جديد</div>
+    </div>
+    <div id="fLogin">
+      <input class="auth-input" type="email"    id="lEmail" data-i18n-ph="ph_email" placeholder="البريد الإلكتروني" autocomplete="email">
+      <input class="auth-input" type="password" id="lPass"  data-i18n-ph="ph_password" placeholder="كلمة المرور" autocomplete="current-password">
+      <button class="auth-btn" id="lBtn" onclick="doLogin()" data-i18n="btn_login">دخول</button>
+    </div>
+    <div id="fReg" style="display:none">
+      <input class="auth-input" type="email"    id="rEmail"  data-i18n-ph="ph_email" placeholder="البريد الإلكتروني" autocomplete="email">
+      <input class="auth-input" type="password" id="rPass"   data-i18n-ph="ph_password_new" placeholder="كلمة المرور (6 أحرف+)" autocomplete="new-password">
+      <input class="auth-input" type="password" id="rPass2"  data-i18n-ph="ph_password_confirm" placeholder="تأكيد كلمة المرور" autocomplete="new-password">
+      <button class="auth-btn" id="rBtn" onclick="doRegister()" data-i18n="btn_register">إنشاء حساب</button>
+    </div>
+    <div class="auth-err" id="authErr"></div>
+    <button class="guest-btn" onclick="guestMode()" data-i18n="btn_guest">متابعة بدون حساب</button>
+  </div>
+</div>
+
+<!-- APP SCREEN -->
+<div class="app-wrap" id="appWrap">
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="app-title">⚜ <span data-i18n="app_title">زكاة</span> <span class="sync" id="syncDot"></span></div>
+        <div class="user-badge" id="userBadge" data-i18n="badge_guest">زائر</div>
+      </div>
+      <div class="hdr-btns">
+        <button class="lang-btn" id="langBtnApp" onclick="toggleLang()">EN</button>
+        <button class="hdr-btn" onclick="fetchRates(true)">↻</button>
+        <button class="hdr-btn" id="authBtn" onclick="toggleAuth()" data-i18n="btn_login">دخول</button>
+      </div>
+    </div>
+    <div class="prices-bar">
+      <div class="price-pill"><span class="lbl" data-i18n="pill_24k_prefix">24ك </span><span class="val" id="ph24">--</span><span class="lbl" data-i18n="pill_unit_gram"> ج/غ</span></div>
+      <div class="price-pill"><span class="lbl" data-i18n="pill_21k_prefix">21ك </span><span class="val" id="ph21">--</span><span class="lbl" data-i18n="pill_unit_gram"> ج/غ</span></div>
+      <div class="price-pill"><span class="lbl" data-i18n="pill_usd_prefix">$= </span><span class="val" id="phUSD">--</span><span class="lbl" data-i18n="pill_unit_egp"> ج</span></div>
+      <div class="price-pill"><span class="lbl" data-i18n="pill_eur_prefix">€= </span><span class="val" id="phEUR">--</span><span class="lbl" data-i18n="pill_unit_egp"> ج</span></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('assets',this)" data-i18n="tab_assets">أصولي</div>
+    <div class="tab"        onclick="showTab('prices',this)" data-i18n="tab_prices">الأسعار</div>
+    <div class="tab"        onclick="showTab('zakat',this)"  data-i18n="tab_zakat">الزكاة</div>
+  </div>
+
+  <div class="sections-wrap">
+  <div class="section active" id="tab-assets">
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> <span data-i18n="card_enter_assets">أدخل ما تملكه</span></div>
+      <div class="input-row">
+        <div class="input-group"><label data-i18n="label_g24">ذهب عيار 24 (جرام)</label><input type="number" id="g24" placeholder="0" min="0" step="0.01"></div>
+        <div class="input-group"><label data-i18n="label_g21">ذهب عيار 21 (جرام)</label><input type="number" id="g21" placeholder="0" min="0" step="0.01"></div>
+      </div>
+      <div class="input-row">
+        <div class="input-group"><label data-i18n="label_sar">ريال سعودي</label><input type="number" id="iSAR" placeholder="0" min="0"></div>
+        <div class="input-group"><label data-i18n="label_usd">دولار أمريكي</label><input type="number" id="iUSD" placeholder="0" min="0"></div>
+      </div>
+      <div class="input-row">
+        <div class="input-group"><label data-i18n="label_eur">يورو</label><input type="number" id="iEUR" placeholder="0" min="0"></div>
+        <div class="input-group"><label data-i18n="label_egp">جنيه مصري</label><input type="number" id="iEGP" placeholder="0" min="0"></div>
+      </div>
+      <div class="input-group" style="margin-bottom:10px">
+        <label data-i18n="label_nisab_date">تاريخ دخولك النصاب (اختياري)</label>
+        <input type="date" id="nisabDateInput">
+        <div class="stxt" style="text-align:start;margin-top:2px"><span data-i18n="hint_nisab_date">لو النصاب معاك من زمان، حدد التاريخ هنا وهيحسب الحول منه. سيبها فاضية عشان يحسبها تلقائياً من أول يوم تدخل بياناتك وتبلغ النصاب.</span> <span style="text-decoration:underline;cursor:pointer;color:var(--gold-dark)" onclick="resetNisabStart()" data-i18n="link_reset_nisab">إعادة الحساب من النهاردة</span></div>
+      </div>
+      <button class="save-btn" id="saveBtn" onclick="saveAssets()" data-i18n="btn_save">💾 حفظ وحساب</button>
+      <div class="stxt" id="saveSt"></div>
+    </div>
+    <div class="card" id="summaryCard" style="display:none">
+      <div class="card-title"><span class="dot"></span> <span data-i18n="card_total_assets">إجمالي ما تملكه</span></div>
+      <div class="summary-grid">
+        <div class="stat-box"><div class="stat-label" data-i18n="stat_24">عيار 24</div><div class="stat-val" id="s24">0</div><div class="stat-unit" data-i18n="unit_gram">جرام</div></div>
+        <div class="stat-box"><div class="stat-label" data-i18n="stat_21">عيار 21</div><div class="stat-val" id="s21">0</div><div class="stat-unit" data-i18n="unit_gram">جرام</div></div>
+        <div class="stat-box"><div class="stat-label" data-i18n="stat_gold_value">قيمة الذهب</div><div class="stat-val" id="sGold">0</div><div class="stat-unit" data-i18n="unit_egp">جنيه</div></div>
+        <div class="stat-box"><div class="stat-label" data-i18n="stat_cash">النقود</div><div class="stat-val" id="sCash">0</div><div class="stat-unit" data-i18n="unit_egp">جنيه</div></div>
+      </div>
+      <div class="summary-grid">
+        <div class="stat-box hl" style="grid-column:1/-1">
+          <div class="stat-label" data-i18n="stat_total">إجمالي ثروتك</div>
+          <div class="stat-val" id="sTotal">0</div>
+          <div class="stat-unit" data-i18n="unit_egp_full">جنيه مصري</div>
+        </div>
+      </div>
+      <div class="lupd" id="savedTime"></div>
+    </div>
+  </div>
+
+  <div class="section" id="tab-prices">
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> <span data-i18n="card_gold_prices">أسعار الذهب (جنيه/جرام)</span></div>
+      <div class="gold-row">
+        <div class="gold-box"><div class="karat" data-i18n="stat_24">عيار 24</div><div class="gprice" id="p24">--</div><div class="gunit" data-i18n="unit_egp_gram">جنيه/جرام</div></div>
+        <div class="gold-box"><div class="karat" data-i18n="stat_21">عيار 21</div><div class="gprice" id="p21">--</div><div class="gunit" data-i18n="unit_egp_gram">جنيه/جرام</div></div>
+      </div>
+      <div class="stxt" id="goldSt" data-i18n="loading_dots">جاري التحميل...</div>
+      <div class="price-warning" id="priceWarning" style="display:none"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> <span data-i18n="card_currency_rates">أسعار العملات (مقابل الجنيه)</span></div>
+      <div class="rate-grid">
+        <div class="rate-box"><div class="rflag">🇺🇸</div><div class="rcname" data-i18n="cur_usd">دولار</div><div class="rval" id="rUSD">--</div></div>
+        <div class="rate-box"><div class="rflag">🇪🇺</div><div class="rcname" data-i18n="cur_eur">يورو</div><div class="rval" id="rEUR">--</div></div>
+        <div class="rate-box"><div class="rflag">🇸🇦</div><div class="rcname" data-i18n="cur_sar">ريال</div><div class="rval" id="rSAR">--</div></div>
+        <div class="rate-box"><div class="rflag">🇪🇬</div><div class="rcname" data-i18n="cur_egp">جنيه</div><div class="rval">1.00</div></div>
+      </div>
+      <div class="stxt" id="rateSt"></div>
+      <div class="lupd"  id="lastUpd"></div>
+    </div>
+  </div>
+
+  <div class="section" id="tab-zakat">
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> <span data-i18n="card_calc_zakat">حساب الزكاة</span></div>
+      <div id="zakatContent"><div class="stxt" style="padding:1rem 0" data-i18n="save_first">احفظ بياناتك أولاً</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> <span data-i18n="card_info">معلومات</span></div>
+      <div style="font-size:12px;color:var(--text-muted);line-height:1.8">
+        <p data-i18n="info_1">• <b>النصاب:</b> 85 جرام ذهب عيار 24</p>
+        <p data-i18n="info_2">• <b>عيار 21:</b> يتحول تلقائياً (×21/24)</p>
+        <p data-i18n="info_3">• <b>مقدار الزكاة:</b> 2.5% من إجمالي الثروة</p>
+        <p data-i18n="info_5">• <b>الحول:</b> لازم يفضل معاك النصاب سنة هجرية كاملة (~354 يوم) من أول يوم بلغت فيه النصاب</p>
+        <p data-i18n="info_6">• <b>لو نزلت تحت النصاب</b> في أي وقت خلال السنة، الحول بيتصفر ولازم يبدأ من جديد لما تبلغ النصاب تاني</p>
+        <p data-i18n="info_7">• <b>عند تمام الحول</b> بتدفع 2.5% من إجمالي ثروتك وقتها (مش وقت ما بلغت النصاب)</p>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+// ===== FIREBASE =====
+firebase.initializeApp({
+  apiKey:            "AIzaSyAP6cb9HerGIdvaKqJtEZF4a4HVS4PpVqc",
+  authDomain:        "zakah-89cd7.firebaseapp.com",
+  projectId:         "zakah-89cd7",
+  storageBucket:     "zakah-89cd7.firebasestorage.app",
+  messagingSenderId: "764011796925",
+  appId:             "1:764011796925:web:2a61add92f1d79ddb29ad4"
+});
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+try {
+  db.enablePersistence({ synchronizeTabs: true }).catch(function(e) {
+    console.warn('Firestore offline persistence not enabled:', e.code);
+  });
+} catch(e) {}
+
+var authReady = auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+  .catch(function(e) {
+    console.error('setPersistence(LOCAL) failed, falling back to SESSION:', e);
+    return auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(function(e2){
+      console.error('setPersistence(SESSION) also failed:', e2);
+    });
+  });
+
+// ===== I18N =====
+var I18N = {
+  auth_title:            { ar:'زكاة', en:'Zakat' },
+  auth_sub:              { ar:'تتبع ثروتك واحسب زكاتك', en:'Track your wealth and calculate your Zakat' },
+  tab_login:             { ar:'دخول', en:'Login' },
+  tab_register:          { ar:'حساب جديد', en:'New account' },
+  ph_email:              { ar:'البريد الإلكتروني', en:'Email' },
+  ph_password:           { ar:'كلمة المرور', en:'Password' },
+  btn_login:             { ar:'دخول', en:'Login' },
+  ph_password_new:       { ar:'كلمة المرور (6 أحرف+)', en:'Password (6+ characters)' },
+  ph_password_confirm:   { ar:'تأكيد كلمة المرور', en:'Confirm password' },
+  btn_register:          { ar:'إنشاء حساب', en:'Create account' },
+  btn_guest:             { ar:'متابعة بدون حساب', en:'Continue without an account' },
+  app_title:             { ar:'زكاة', en:'Zakat' },
+  badge_guest:           { ar:'زائر', en:'Guest' },
+  btn_logout:            { ar:'خروج', en:'Logout' },
+  tab_assets:            { ar:'أصولي', en:'My Assets' },
+  tab_prices:            { ar:'الأسعار', en:'Prices' },
+  tab_zakat:             { ar:'الزكاة', en:'Zakat' },
+  card_enter_assets:     { ar:'أدخل ما تملكه', en:'Enter what you own' },
+  label_g24:             { ar:'ذهب عيار 24 (جرام)', en:'Gold 24K (grams)' },
+  label_g21:             { ar:'ذهب عيار 21 (جرام)', en:'Gold 21K (grams)' },
+  label_sar:             { ar:'ريال سعودي', en:'Saudi Riyal' },
+  label_usd:             { ar:'دولار أمريكي', en:'US Dollar' },
+  label_eur:             { ar:'يورو', en:'Euro' },
+  label_egp:             { ar:'جنيه مصري', en:'Egyptian Pound' },
+  label_nisab_date:      { ar:'تاريخ دخولك النصاب (اختياري)', en:'Date you reached Nisab (optional)' },
+  hint_nisab_date:       { ar:'لو النصاب معاك من زمان، حدد التاريخ هنا وهيحسب الحول منه. سيبها فاضية عشان يحسبها تلقائياً من أول يوم تدخل بياناتك وتبلغ النصاب.', en:'If you have had the Nisab for a while, set the date here and the hawl will be calculated from it. Leave it empty to calculate it automatically from the first day you enter data and reach Nisab.' },
+  link_reset_nisab:      { ar:'إعادة الحساب من النهاردة', en:'Recalculate from today' },
+  btn_save:              { ar:'💾 حفظ وحساب', en:'💾 Save & calculate' },
+  card_total_assets:     { ar:'إجمالي ما تملكه', en:'Your total assets' },
+  stat_24:               { ar:'عيار 24', en:'24K' },
+  stat_21:               { ar:'عيار 21', en:'21K' },
+  stat_gold_value:       { ar:'قيمة الذهب', en:'Gold value' },
+  stat_cash:             { ar:'النقود', en:'Cash' },
+  unit_gram:             { ar:'جرام', en:'grams' },
+  unit_egp:              { ar:'جنيه', en:'EGP' },
+  stat_total:            { ar:'إجمالي ثروتك', en:'Your total wealth' },
+  unit_egp_full:         { ar:'جنيه مصري', en:'Egyptian Pounds' },
+  card_gold_prices:      { ar:'أسعار الذهب (جنيه/جرام)', en:'Gold Prices (EGP/gram)' },
+  unit_egp_gram:         { ar:'جنيه/جرام', en:'EGP/gram' },
+  loading_dots:          { ar:'جاري التحميل...', en:'Loading...' },
+  card_currency_rates:   { ar:'أسعار العملات (مقابل الجنيه)', en:'Currency Rates (vs EGP)' },
+  cur_usd:               { ar:'دولار', en:'US Dollar' },
+  cur_eur:               { ar:'يورو', en:'Euro' },
+  cur_sar:               { ar:'ريال', en:'Riyal' },
+  cur_egp:               { ar:'جنيه', en:'Pound' },
+  card_calc_zakat:       { ar:'حساب الزكاة', en:'Zakat Calculation' },
+  save_first:            { ar:'احفظ بياناتك أولاً', en:'Save your data first' },
+  card_info:             { ar:'معلومات', en:'Information' },
+  info_1: { ar:'• <b>النصاب:</b> 85 جرام ذهب عيار 24', en:'• <b>Nisab:</b> 85 grams of 24K gold' },
+  info_2: { ar:'• <b>عيار 21:</b> يتحول تلقائياً (×21/24)', en:'• <b>21K gold:</b> converted automatically (×21/24)' },
+  info_3: { ar:'• <b>مقدار الزكاة:</b> 2.5% من إجمالي الثروة', en:'• <b>Zakat rate:</b> 2.5% of total wealth' },
+  info_5: { ar:'• <b>الحول:</b> لازم يفضل معاك النصاب سنة هجرية كاملة (~354 يوم) من أول يوم بلغت فيه النصاب', en:'• <b>Hawl:</b> you must keep the Nisab for one full lunar year (~354 days) from the first day you reached it' },
+  info_6: { ar:'• <b>لو نزلت تحت النصاب</b> في أي وقت خلال السنة، الحول بيتصفر ولازم يبدأ من جديد لما تبلغ النصاب تاني', en:'• <b>If you drop below Nisab</b> at any point during the year, the hawl resets and must start over once you reach Nisab again' },
+  info_7: { ar:'• <b>عند تمام الحول</b> بتدفع 2.5% من إجمالي ثروتك وقتها (مش وقت ما بلغت النصاب)', en:'• <b>Once the hawl completes</b> you pay 2.5% of your total wealth at that point (not when you first reached Nisab)' },
+  pill_24k_prefix:  { ar:'24ك ', en:'24K ' },
+  pill_21k_prefix:  { ar:'21ك ', en:'21K ' },
+  pill_unit_gram:   { ar:' ج/غ', en:' EGP/g' },
+  pill_usd_prefix:  { ar:'$= ', en:'$= ' },
+  pill_eur_prefix:  { ar:'€= ', en:'€= ' },
+  pill_unit_egp:    { ar:' ج', en:' EGP' },
+
+  err_enter_email_password: { ar:'أدخل البريد وكلمة المرور', en:'Enter your email and password' },
+  err_password_mismatch:    { ar:'كلمتا المرور غير متطابقتين', en:'Passwords do not match' },
+  err_password_short:       { ar:'كلمة المرور 6 أحرف على الأقل', en:'Password must be at least 6 characters' },
+  err_invalid_credential:   { ar:'البريد أو كلمة المرور غلط', en:'Incorrect email or password' },
+  err_email_in_use:         { ar:'البريد مستخدم بالفعل', en:'Email is already in use' },
+  err_weak_password:        { ar:'كلمة المرور ضعيفة (6 أحرف+)', en:'Password is too weak (6+ characters)' },
+  err_invalid_email:        { ar:'البريد غير صحيح', en:'Invalid email' },
+  err_too_many_requests:    { ar:'محاولات كثيرة، حاول بعد قليل', en:'Too many attempts, try again shortly' },
+  err_network:              { ar:'تحقق من الإنترنت', en:'Check your internet connection' },
+  err_generic:              { ar:'حدث خطأ، حاول مجدداً', en:'Something went wrong, please try again' },
+
+  btn_saving:      { ar:'جاري الحفظ...', en:'Saving...' },
+  saved_cloud:     { ar:'✓ تم الحفظ في حسابك ☁', en:'✓ Saved to your account ☁' },
+  saved_local:     { ar:'✓ تم الحفظ محلياً', en:'✓ Saved locally' },
+  loaded_cloud:    { ar:'✓ تم تحميل بياناتك', en:'✓ Your data was loaded' },
+  no_saved_data:   { ar:'لا توجد بيانات محفوظة بعد', en:'No saved data yet' },
+  load_error:      { ar:'خطأ في التحميل: ', en:'Load error: ' },
+  save_error:      { ar:'فشل الحفظ: ', en:'Save failed: ' },
+  last_edited:     { ar:'آخر تعديل:', en:'Last edited:' },
+  updating:        { ar:'جاري التحديث...', en:'Updating...' },
+  price_warning_stale: { ar:'تعذر تحديث الأسعار الآن — المعروض من آخر تحديث ناجح بتاريخ:', en:'Could not refresh live prices — showing the last successful update from:' },
+  price_warning_never: { ar:'⚠️ تعذر الوصول لأي مصدر أسعار حالياً، والرقم المعروض تقديري فقط وقد يختلف كثيراً عن السعر الفعلي', en:'⚠️ Could not reach any price source right now — the number shown is a rough estimate and may differ a lot from the real price' },
+  last_update:     { ar:'آخر تحديث:', en:'Last update:' },
+
+  badge_reached_nisab: { ar:'✓ بلغت النصاب', en:'✓ Nisab reached' },
+  title_eligible:      { ar:'أنت مستحق للزكاة', en:'You owe Zakat' },
+  reached_since:       { ar:'بلغت النصاب منذ:', en:'Reached Nisab since:' },
+  hawl_start_suffix:   { ar:'(بداية الحول)', en:'(hawl start)' },
+  since_last_save:     { ar:'منذ آخر حفظ', en:'since last save' },
+  wealth_now:          { ar:'ثروتك الآن:', en:'Your wealth now:' },
+  nisab_label:         { ar:'— النصاب:', en:'— Nisab:' },
+  currency_egp:        { ar:'جنيه', en:'EGP' },
+  hawl_complete_msg:   { ar:'🔔 تم الحول الكامل (سنة هجرية) — زكاتك مستحقة الدفع الآن', en:'🔔 Full hawl complete (lunar year) — your Zakat is due now' },
+  due_date_label:      { ar:'تاريخ استحقاق الزكاة (تمام الحول):', en:'Zakat due date (hawl complete):' },
+  remaining_label:     { ar:'متبقٍ على الاستحقاق:', en:'Remaining until due:' },
+  days_unit:           { ar:'يوم', en:'days' },
+  amount_due_now:      { ar:'مقدار الزكاة المستحقة الآن (2.5%)', en:'Zakat amount due now (2.5%)' },
+  amount_expected:     { ar:'المقدار المتوقع حالياً لو استمر الحول (2.5%)', en:'Expected amount if the hawl continues (2.5%)' },
+  auto_update_note:    { ar:'هذا المبلغ بيتحدث تلقائياً كل ما تعدّل بياناتك أو تتغير الأسعار، وهيبقى نهائي في تاريخ الاستحقاق', en:'This amount updates automatically whenever you edit your data or prices change, and becomes final on the due date' },
+  badge_not_reached:   { ar:'✗ لم تبلغ النصاب', en:'✗ Nisab not reached' },
+  title_not_eligible:  { ar:'لست مستحقاً للزكاة حالياً', en:'You do not owe Zakat currently' },
+  gold24_equiv:        { ar:'معادل ذهبك عيار 24:', en:'Your 24K gold equivalent:' },
+  remaining_to_nisab:  { ar:'متبقي للنصاب:', en:'Remaining to reach Nisab:' },
+  grams_unit:          { ar:'جرام', en:'grams' },
+  progress_label:      { ar:'تقدمك نحو النصاب', en:'Your progress toward Nisab' },
+  current_nisab_value: { ar:'قيمة النصاب الحالية:', en:'Current Nisab value:' },
+  ce_suffix:           { ar:' م', en:' CE' },
+  ah_suffix:           { ar:' هـ', en:' AH' }
+};
+
+var currentLang = (function() {
+  try { return localStorage.getItem('zakat_lang') || 'ar'; } catch(e) { return 'ar'; }
+})();
+
+function t(key) {
+  var e = I18N[key];
+  if (!e) return key;
+  return e[currentLang] || e.ar;
+}
+function locale() { return currentLang === 'ar' ? 'ar-EG' : 'en-US'; }
+
+function applyStaticI18n() {
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir  = currentLang === 'ar' ? 'rtl' : 'ltr';
+  document.title = t('app_title');
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    el.innerHTML = t(el.getAttribute('data-i18n'));
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(function(el) {
+    el.placeholder = t(el.getAttribute('data-i18n-ph'));
+  });
+  var lb1 = document.getElementById('langBtnAuth'); if (lb1) lb1.textContent = currentLang === 'ar' ? 'EN' : 'AR';
+  var lb2 = document.getElementById('langBtnApp');  if (lb2) lb2.textContent = currentLang === 'ar' ? 'EN' : 'AR';
+  var authBtn = document.getElementById('authBtn');
+  if (authBtn) authBtn.textContent = curUser ? t('btn_logout') : t('btn_login');
+  var badge = document.getElementById('userBadge');
+  if (badge) badge.textContent = curUser ? curUser.email : t('badge_guest');
+}
+
+window.toggleLang = function() {
+  currentLang = currentLang === 'ar' ? 'en' : 'ar';
+  try { localStorage.setItem('zakat_lang', currentLang); } catch(e) {}
+  applyStaticI18n();
+  if (rates.USD || rates.EUR || rates.SAR) updateRatesUI();
+  if (gold.g24 || gold.g21) updateGoldUI();
+  if (assets) { updateSummary(); updateZakat(); }
+};
+
+// ===== STATE =====
+var rates     = { USD:null, EUR:null, SAR:null };
+var gold      = { g24:null, g21:null };
+var assets    = null;
+var nisabDate = null;
+var curUser   = null;
+var isGuest   = false;
+var NISAB     = 85;
+
+// ===== AUTH HELPERS =====
+function authTab(tab) {
+  document.getElementById('fLogin').style.display = tab==='login'?'block':'none';
+  document.getElementById('fReg').style.display   = tab==='reg'  ?'block':'none';
+  document.getElementById('tLogin').classList.toggle('active', tab==='login');
+  document.getElementById('tReg').classList.toggle('active',   tab==='reg');
+  document.getElementById('authErr').textContent = '';
+}
+
+function authErrMsg(code) {
+  var m = {
+    'auth/invalid-credential':    'err_invalid_credential',
+    'auth/user-not-found':        'err_invalid_credential',
+    'auth/wrong-password':        'err_invalid_credential',
+    'auth/email-already-in-use':  'err_email_in_use',
+    'auth/weak-password':         'err_weak_password',
+    'auth/invalid-email':         'err_invalid_email',
+    'auth/too-many-requests':     'err_too_many_requests',
+    'auth/network-request-failed':'err_network',
+  };
+  return t(m[code] || 'err_generic');
+}
+
+function setAuthErr(msg) { document.getElementById('authErr').textContent = msg; }
+
+window.doLogin = async function() {
+  var email = document.getElementById('lEmail').value.trim();
+  var pass  = document.getElementById('lPass').value;
+  if (!email||!pass) { setAuthErr(t('err_enter_email_password')); return; }
+  setAuthErr('');
+  var btn = document.getElementById('lBtn');
+  btn.disabled=true; btn.textContent='...';
+  try {
+    await authReady;
+    await auth.signInWithEmailAndPassword(email, pass);
+  }
+  catch(e) { setAuthErr(authErrMsg(e.code)); }
+  btn.disabled=false; btn.textContent=t('btn_login');
+};
+
+window.doRegister = async function() {
+  var email = document.getElementById('rEmail').value.trim();
+  var pass  = document.getElementById('rPass').value;
+  var pass2 = document.getElementById('rPass2').value;
+  if (!email||!pass) { setAuthErr(t('err_enter_email_password')); return; }
+  if (pass!==pass2)  { setAuthErr(t('err_password_mismatch')); return; }
+  if (pass.length<6) { setAuthErr(t('err_password_short')); return; }
+  setAuthErr('');
+  var btn = document.getElementById('rBtn');
+  btn.disabled=true; btn.textContent='...';
+  try {
+    await authReady;
+    await auth.createUserWithEmailAndPassword(email, pass);
+  }
+  catch(e) { setAuthErr(authErrMsg(e.code)); }
+  btn.disabled=false; btn.textContent=t('btn_register');
+};
+
+window.guestMode = function() {
+  isGuest = true;
+  try { localStorage.setItem('zakat_guest','1'); } catch(e) {}
+  showApp();
+  loadLocal();
+  if (assets) { fillInputs(); updateSummary(); updateZakat(); }
+  fetchRates();
+};
+
+window.toggleAuth = function() {
+  if (curUser) auth.signOut();
+  else {
+    try { localStorage.removeItem('zakat_guest'); } catch(e) {}
+    showAuth();
+  }
+};
+
+// ===== SCREENS =====
+function hideLoading() {
+  var l = document.getElementById('loadingWrap');
+  if (l) l.style.display = 'none';
+}
+function showApp() {
+  hideLoading();
+  document.getElementById('authWrap').style.display = 'none';
+  document.getElementById('appWrap').style.display  = 'block';
+  applyStaticI18n();
+}
+function showAuth() {
+  hideLoading();
+  document.getElementById('authWrap').style.display = 'flex';
+  document.getElementById('appWrap').style.display  = 'none';
+  isGuest = false;
+  applyStaticI18n();
+}
+
+// ===== AUTH STATE =====
+auth.onAuthStateChanged(async function(user) {
+  if (user) {
+    curUser = user;
+    isGuest = false;
+    try { localStorage.removeItem('zakat_guest'); } catch(e) {}
+    document.getElementById('userBadge').textContent = user.email;
+    showApp();
+    await loadCloud();
+    if (assets) { fillInputs(); updateSummary(); updateZakat(); }
+    fetchRates();
+  } else {
+    curUser = null;
+    if (!isGuest) showAuth();
+    else applyStaticI18n();
+  }
+});
+
+// ===== LOCAL STORAGE =====
+function loadLocal() {
+  try {
+    var a = localStorage.getItem('zakat_a');
+    var d = localStorage.getItem('zakat_d');
+    if (a) assets    = JSON.parse(a);
+    if (d) nisabDate = d;
+  } catch(e) {}
+}
+function saveLocal() {
+  try {
+    localStorage.setItem('zakat_a', JSON.stringify(assets));
+    if (nisabDate) localStorage.setItem('zakat_d', nisabDate);
+    else           localStorage.removeItem('zakat_d');
+  } catch(e) {}
+}
+
+// ===== FIRESTORE =====
+async function loadCloud() {
+  if (!curUser) return;
+  setSyncing(true);
+  try {
+    var snap = await db.collection('users').doc(curUser.uid).get();
+    if (snap.exists) {
+      var d = snap.data();
+      assets = {
+        g24: d.g24||0, g21: d.g21||0,
+        sar: d.sar||0, usd: d.usd||0,
+        eur: d.eur||0, egp: d.egp||0,
+        savedAt: d.savedAt || new Date().toISOString()
+      };
+      nisabDate = d.nisabDate || null;
+      setSaveSt(t('loaded_cloud'), 3000);
+    } else {
+      setSaveSt(t('no_saved_data'), 3000);
+    }
+  } catch(e) {
+    console.error('loadCloud:', e);
+    setSaveSt(t('load_error') + (e.code||e.message), 0);
+  }
+  setSyncing(false);
+}
+
+async function saveCloud() {
+  if (!curUser || !assets) return;
+  setSyncing(true);
+  try {
+    await db.collection('users').doc(curUser.uid).set({
+      g24: assets.g24, g21: assets.g21,
+      sar: assets.sar, usd: assets.usd,
+      eur: assets.eur, egp: assets.egp,
+      nisabDate: nisabDate || null,
+      savedAt:   assets.savedAt
+    });
+  } catch(e) {
+    console.error('saveCloud:', e);
+    setSaveSt(t('save_error') + (e.code||e.message), 0);
+  }
+  setSyncing(false);
+}
+
+function setSyncing(on) {
+  var d = document.getElementById('syncDot');
+  if (d) d.className = 'sync'+(on?' on':'');
+}
+function setSaveSt(msg, ms) {
+  var el = document.getElementById('saveSt');
+  if (!el) return;
+  el.textContent = msg;
+  if (ms) setTimeout(function(){ el.textContent=''; }, ms);
+}
+
+// ===== RATES & GOLD =====
+var RATES_CACHE_KEY = 'zakat_rates_cache';
+var RATES_CACHE_TTL = 5*60*1000;
+
+function loadRatesCache() {
+  try {
+    var raw = localStorage.getItem(RATES_CACHE_KEY);
+    if (!raw) return null;
+    var c = JSON.parse(raw);
+    if (!c || !c.ts || !c.rates || !c.gold) return null;
+    return c;
+  } catch(e) { return null; }
+}
+function saveRatesCache() {
+  try { localStorage.setItem(RATES_CACHE_KEY, JSON.stringify({ rates: rates, gold: gold, ts: Date.now() })); }
+  catch(e) {}
+}
+
+window.fetchRates = async function(forceRefresh) {
+  var cache = loadRatesCache();
+  if (!forceRefresh && cache && (Date.now() - cache.ts) < RATES_CACHE_TTL) {
+    rates = cache.rates; gold = cache.gold;
+    updateRatesUI(); updateGoldUI();
+    setPriceWarning(false);
+    document.getElementById('lastUpd').textContent = t('last_update')+' '+new Date(cache.ts).toLocaleTimeString(locale());
+    if (assets) { updateSummary(); updateZakat(); }
+    return;
+  }
+
+  document.getElementById('goldSt').textContent = t('updating');
+
+  var results = await Promise.all([fetchCurrencyRates(), fetchGoldSpotUSD()]);
+  var curRes = results[0], goldRes = results[1];
+
+  var usedStale = false;
+
+  if (curRes) {
+    rates.USD = curRes.USD; rates.EUR = curRes.EUR; rates.SAR = curRes.SAR;
+  } else if (cache && cache.rates && cache.rates.USD) {
+    rates = cache.rates; usedStale = true;
+  } else {
+    rates.USD=50.5; rates.EUR=55.8; rates.SAR=13.5; usedStale = true;
+  }
+  updateRatesUI();
+
+  if (goldRes && goldRes.oz && rates.USD) {
+    gold.g24 = (goldRes.oz/31.1035)*rates.USD;
+    gold.g21 = gold.g24*(21/24);
+  } else if (cache && cache.gold && cache.gold.g24) {
+    gold = cache.gold; usedStale = true;
+  } else {
+    gold.g24=6691; gold.g21=5855; usedStale = true;
+  }
+  updateGoldUI();
+  document.getElementById('goldSt').textContent = '';
+
+  setPriceWarning(usedStale, cache ? cache.ts : null);
+
+  if (assets) { updateSummary(); updateZakat(); }
+  document.getElementById('lastUpd').textContent = t('last_update')+' '+new Date().toLocaleTimeString(locale());
+  if (!usedStale) saveRatesCache();
+};
+
+function setPriceWarning(stale, lastGoodTs) {
+  var el = document.getElementById('priceWarning');
+  if (!el) return;
+  if (!stale) { el.style.display = 'none'; el.textContent = ''; return; }
+  el.style.display = 'block';
+  el.textContent = lastGoodTs
+    ? t('price_warning_stale') + ' ' + new Date(lastGoodTs).toLocaleString(locale())
+    : t('price_warning_never');
+}
+
+function fetchJsonWithTimeout(url, ms) {
+  var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  var id = controller ? setTimeout(function(){ controller.abort(); }, ms || 6000) : null;
+  return fetch(url, controller ? { signal: controller.signal } : {})
+    .then(function(r){ if (id) clearTimeout(id); return r.ok ? r.json() : null; })
+    .catch(function(){ if (id) clearTimeout(id); return null; });
+}
+
+async function fetchCurrencyRates() {
+  var d = await fetchJsonWithTimeout('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json', 6000);
+  if (d && d.usd && d.usd.egp) {
+    return { USD: d.usd.egp, EUR: d.usd.egp/d.usd.eur, SAR: d.usd.egp/d.usd.sar };
+  }
+  var d2 = await fetchJsonWithTimeout('https://open.er-api.com/v6/latest/USD', 6000);
+  if (d2 && d2.rates && d2.rates.EGP) {
+    return { USD: d2.rates.EGP, EUR: d2.rates.EGP/d2.rates.EUR, SAR: d2.rates.EGP/d2.rates.SAR };
+  }
+  return null;
+}
+
+async function fetchGoldSpotUSD() {
+  var d = await fetchJsonWithTimeout('https://api.gold-api.com/price/XAU', 6000);
+  if (d && d.price) return { oz: parseFloat(d.price) };
+
+  var d2 = await fetchJsonWithTimeout('https://data-asg.goldprice.org/dbXRates/USD', 6000);
+  if (d2 && d2.items && d2.items[0] && d2.items[0].xauPrice) return { oz: parseFloat(d2.items[0].xauPrice) };
+
+  var d3 = await fetchJsonWithTimeout('https://api.metals.live/v1/spot/gold', 6000);
+  if (d3) {
+    var oz = Array.isArray(d3) ? (d3[0] && d3[0].gold) : d3.price;
+    if (oz) return { oz: parseFloat(oz) };
+  }
+  return null;
+}
+
+function updateRatesUI() {
+  document.getElementById('rUSD').textContent  = rates.USD?rates.USD.toFixed(2):'--';
+  document.getElementById('rEUR').textContent  = rates.EUR?rates.EUR.toFixed(2):'--';
+  document.getElementById('rSAR').textContent  = rates.SAR?rates.SAR.toFixed(2):'--';
+  document.getElementById('phUSD').textContent = rates.USD?rates.USD.toFixed(1):'--';
+  document.getElementById('phEUR').textContent = rates.EUR?rates.EUR.toFixed(1):'--';
+}
+function updateGoldUI() {
+  document.getElementById('p24').textContent  = gold.g24?gold.g24.toFixed(0):'--';
+  document.getElementById('p21').textContent  = gold.g21?gold.g21.toFixed(0):'--';
+  document.getElementById('ph24').textContent = gold.g24?gold.g24.toFixed(0):'--';
+  document.getElementById('ph21').textContent = gold.g21?gold.g21.toFixed(0):'--';
+}
+
+// ===== ASSETS =====
+window.saveAssets = async function() {
+  var btn = document.getElementById('saveBtn');
+  btn.disabled=true; btn.textContent=t('btn_saving');
+  assets = {
+    g24: parseFloat(document.getElementById('g24').value)||0,
+    g21: parseFloat(document.getElementById('g21').value)||0,
+    sar: parseFloat(document.getElementById('iSAR').value)||0,
+    usd: parseFloat(document.getElementById('iUSD').value)||0,
+    eur: parseFloat(document.getElementById('iEUR').value)||0,
+    egp: parseFloat(document.getElementById('iEGP').value)||0,
+    savedAt: new Date().toISOString()
+  };
+  checkNisab();
+  if (curUser) {
+    await saveCloud();
+    setSaveSt(t('saved_cloud'), 3000);
+  } else {
+    saveLocal();
+    setSaveSt(t('saved_local'), 3000);
+  }
+  updateSummary(); updateZakat();
+  btn.disabled=false; btn.textContent=t('btn_save');
+};
+
+function fillInputs() {
+  if (!assets) return;
+  document.getElementById('g24').value  = assets.g24||'';
+  document.getElementById('g21').value  = assets.g21||'';
+  document.getElementById('iSAR').value = assets.sar||'';
+  document.getElementById('iUSD').value = assets.usd||'';
+  document.getElementById('iEUR').value = assets.eur||'';
+  document.getElementById('iEGP').value = assets.egp||'';
+  var ndInput = document.getElementById('nisabDateInput');
+  if (ndInput) ndInput.value = nisabDate ? toLocalDateInputValue(new Date(nisabDate)) : '';
+}
+
+function toLocalDateInputValue(dateObj) {
+  var y = dateObj.getFullYear();
+  var m = String(dateObj.getMonth()+1).padStart(2,'0');
+  var d = String(dateObj.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+d;
+}
+
+function checkNisab() {
+  if (!assets) return;
+  var nisabEGP = NISAB * (gold.g24 || 0);
+  var t2 = calcTotals();
+  var totalEGP = t2 ? t2.total : 0;
+  var manualField = document.getElementById('nisabDateInput');
+  var manualVal   = manualField ? manualField.value : '';
+  if (nisabEGP > 0 && totalEGP >= nisabEGP) {
+    if (manualVal) {
+      var d = new Date(manualVal + 'T00:00:00');
+      if (!isNaN(d.getTime())) nisabDate = d.toISOString();
+    } else if (!nisabDate) {
+      nisabDate = new Date().toISOString();
+    }
+  } else {
+    nisabDate = null;
+  }
+}
+
+window.resetNisabStart = async function() {
+  nisabDate = null;
+  var f = document.getElementById('nisabDateInput');
+  if (f) f.value = '';
+  if (!assets) return;
+  checkNisab();
+  if (curUser) { await saveCloud(); } else { saveLocal(); }
+  updateSummary(); updateZakat();
+};
+
+function calcTotals() {
+  if (!assets) return null;
+  var gEGP = (assets.g24||0)*(gold.g24||0)+(assets.g21||0)*(gold.g21||0);
+  var cEGP = (assets.sar||0)*(rates.SAR||13.5)+(assets.usd||0)*(rates.USD||50.5)+(assets.eur||0)*(rates.EUR||55.8)+(assets.egp||0);
+  return { gEGP:gEGP, cEGP:cEGP, total:gEGP+cEGP };
+}
+
+function updateSummary() {
+  if (!assets) return;
+  var t2 = calcTotals();
+  document.getElementById('s24').textContent   = (assets.g24||0).toFixed(2);
+  document.getElementById('s21').textContent   = (assets.g21||0).toFixed(2);
+  document.getElementById('sGold').textContent = Math.round(t2.gEGP).toLocaleString(locale());
+  document.getElementById('sCash').textContent = Math.round(t2.cEGP).toLocaleString(locale());
+  document.getElementById('sTotal').textContent= Math.round(t2.total).toLocaleString(locale());
+  document.getElementById('summaryCard').style.display='block';
+  var d=new Date(assets.savedAt);
+  document.getElementById('savedTime').textContent=t('last_edited')+' '+d.toLocaleDateString(locale())+' '+d.toLocaleTimeString(locale());
+}
+
+var HAWL_DAYS = 354;
+
+function formatDateDual(date) {
+  var greg = date.toLocaleDateString(locale(), {year:'numeric', month:'long', day:'numeric'});
+  try {
+    var hijriLocale = currentLang === 'ar' ? 'ar-SA-u-ca-islamic-umalqura' : 'en-u-ca-islamic-umalqura';
+    var hijri = new Intl.DateTimeFormat(hijriLocale, {year:'numeric', month:'long', day:'numeric'}).format(date);
+    return greg + t('ce_suffix') + ' — ' + hijri + t('ah_suffix');
+  } catch(e) {
+    return greg + t('ce_suffix');
+  }
+}
+
+function updateZakat() {
+  if (!assets) return;
+  var t2   = calcTotals();
+  var t24  = (assets.g24||0)+((assets.g21||0)*21/24);
+  var nEGP = NISAB*(gold.g24||0);
+  var elig = nEGP > 0 && t2.total >= nEGP;
+  var zamt = elig?t2.total*0.025:0;
+  var pct  = nEGP > 0 ? Math.min((t2.total/nEGP)*100, 100) : 0;
+  var html = '';
+  if (elig) {
+    var startDate = nisabDate ? new Date(nisabDate) : new Date();
+    var ds = formatDateDual(startDate);
+    var dueDate = new Date(startDate.getTime() + HAWL_DAYS*24*60*60*1000);
+    var dueStr  = formatDateDual(dueDate);
+    var msLeft   = dueDate.getTime() - Date.now();
+    var daysLeft = Math.ceil(msLeft/(24*60*60*1000));
+    var hawlDone = msLeft <= 0;
+
+    html += '<div class="zakat-card yes">'
+      +'<div class="zbadge by">'+t('badge_reached_nisab')+'</div>'
+      +'<div class="zt y">'+t('title_eligible')+'</div>'
+      +'<div class="zs">'+t('reached_since')+' '+ds+' '+t('hawl_start_suffix')+'</div>'
+      +'<div class="zs">'+t('wealth_now')+' <b>'+Math.round(t2.total).toLocaleString(locale())+' '+t('currency_egp')+'</b> '+t('nisab_label')+' '+Math.round(nEGP).toLocaleString(locale())+' '+t('currency_egp')+'</div>';
+
+    if (hawlDone) {
+      html += '<div style="margin-top:10px;padding:8px 10px;background:rgba(227,207,159,0.12);border-radius:8px;font-size:12px;color:var(--green);text-align:center;font-weight:700">'
+        +t('hawl_complete_msg')+'</div>';
+    } else {
+      html += '<div class="zs">'+t('due_date_label')+' <b>'+dueStr+'</b></div>'
+        +'<div class="zs">'+t('remaining_label')+' <b>'+daysLeft+' '+t('days_unit')+'</b></div>';
+    }
+
+    html += '<div class="zamtrow"><span style="font-size:12px;color:var(--text-muted)">'+(hawlDone?t('amount_due_now'):t('amount_expected'))+'</span>'
+      +'<span style="font-size:20px;font-weight:700;color:var(--green);direction:ltr">'+Math.round(zamt).toLocaleString(locale())+'</span>'
+      +'<span style="font-size:12px;color:var(--text-muted)">'+t('currency_egp')+'</span></div>'
+      +'<div class="stxt" style="margin-top:6px">'+t('auto_update_note')+'</div>'
+      +'</div>';
+  } else {
+    html += '<div class="zakat-card no">'
+      +'<div class="zbadge bn">'+t('badge_not_reached')+'</div>'
+      +'<div class="zt n">'+t('title_not_eligible')+'</div>'
+      +'<div class="zs">'+t('gold24_equiv')+' '+t24.toFixed(2)+' '+t('grams_unit')+'</div>'
+      +'<div class="zs">'+t('remaining_to_nisab')+' '+(NISAB-t24).toFixed(2)+' '+t('grams_unit')+'</div></div>';
+  }
+  html += '<div class="bar-wrap"><div class="bar-lbl"><span>'+t('progress_label')+'</span><span>'+pct.toFixed(1)+'%</span></div>'
+    +'<div class="bar-track"><div class="bar-fill '+(elig?'by2':'bn2')+'" style="width:'+pct+'%"></div></div></div>';
+  if (nEGP) html += '<div class="nnote">'+t('current_nisab_value')+' '+Math.round(nEGP).toLocaleString(locale())+' '+t('currency_egp')+'</div>';
+  document.getElementById('zakatContent').innerHTML = html;
+}
+
+window.showTab = function(name,el) {
+  document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  document.getElementById('tab-'+name).classList.add('active');
+  el.classList.add('active');
+};
+
+applyStaticI18n();
+
+try {
+  if (localStorage.getItem('zakat_guest') === '1') {
+    guestMode();
+  }
+} catch(e) {}
+</script>
+</body>
+</html>
