@@ -103,7 +103,7 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
 .summary-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
 .stat-box { background:linear-gradient(160deg,#1F2933,#141B23); border:1px solid var(--border); border-radius:var(--radius-sm); padding:.75rem; text-align:center; box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
 .stat-label { font-size:10px; color:var(--text-hint); margin-bottom:4px; font-weight:500; }
-.stat-val { font-size:18px; font-weight:700; color:var(--gold-light); direction:ltr; font-family:Georgia,'Times New Roman',serif; }
+.stat-val { font-size:18px; font-weight:700; color:var(--gold-light); direction:ltr; font-family: Arial, 'Segoe UI', sans-serif; }
 .stat-unit { font-size:10px; color:var(--text-muted); margin-top:2px; }
 .stat-box.hl { background:linear-gradient(180deg,#D3BC84,#A98A4A 60%,#8A6F37); border-color:#6B5528; }
 .stat-box.hl .stat-label { color:#3A2C0E; }
@@ -133,13 +133,13 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
 .gold-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
 .gold-box { background:linear-gradient(160deg,#2A2A22,#1A1A15); border:1px solid var(--border-strong); border-radius:var(--radius-sm); padding:.75rem; text-align:center; }
 .karat { font-size:11px; color:var(--gold); font-weight:600; }
-.gprice { font-size:17px; font-weight:700; color:var(--gold-light); direction:ltr; font-family:Georgia,serif; }
+.gprice { font-size:17px; font-weight:700; color:var(--gold-light); direction:ltr; font-family: Arial, 'Segoe UI', sans-serif; }
 .gunit { font-size:10px; color:var(--text-hint); }
 .rate-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .rate-box { background:linear-gradient(160deg,#1F2933,#141B23); border:1px solid var(--border); border-radius:var(--radius-sm); padding:.75rem; }
 .rflag { font-size:20px; margin-bottom:4px; }
 .rcname { font-size:11px; color:var(--text-muted); }
-.rval { font-size:15px; font-weight:700; color:var(--text); direction:ltr; }
+.rval { font-size:15px; font-weight:700; color:var(--text); direction:ltr; font-family: Arial, 'Segoe UI', sans-serif; }
 
 .stxt { font-size:11px; color:var(--text-hint); text-align:center; margin-top:4px; min-height:16px; }
 .lupd { font-size:10px; color:var(--text-hint); text-align:center; margin-top:4px; }
@@ -148,6 +148,14 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
 .sync { display:inline-block; width:6px; height:6px; border-radius:50%; background:#7FA6C9; margin-inline-start:4px; vertical-align:middle; }
 .sync.on { background:var(--gold-light); animation:sp 1s infinite; }
 @keyframes sp { 0%,100%{opacity:1}50%{opacity:.3} }
+
+/* numbers across the app always render as plain Western digits in Arial,
+   regardless of UI language (RTL Arabic text stays Segoe UI/Tahoma) */
+.stat-val, .gprice, .rval, .price-pill .val, .zamtrow span[style*="direction:ltr"] {
+  font-family: Arial, Helvetica, sans-serif;
+  font-variant-numeric: normal;
+  font-feature-settings: "lnum" 1;
+}
 
 /* DESKTOP: three sections side by side */
 @media (min-width: 900px) {
@@ -463,7 +471,10 @@ function t(key) {
   if (!e) return key;
   return e[currentLang] || e.ar;
 }
-function locale() { return currentLang === 'ar' ? 'ar-EG' : 'en-US'; }
+// Always force plain Western (Latin) digits via the -u-nu-latn Unicode
+// extension, even for the Arabic locale, so numbers never switch to
+// Eastern Arabic-Indic digits (٠١٢٣) and stay visually consistent in Arial.
+function locale() { return currentLang === 'ar' ? 'ar-EG-u-nu-latn' : 'en-US-u-nu-latn'; }
 
 function applyStaticI18n() {
   document.documentElement.lang = currentLang;
@@ -905,7 +916,9 @@ var HAWL_DAYS = 354;
 function formatDateDual(date) {
   var greg = date.toLocaleDateString(locale(), {year:'numeric', month:'long', day:'numeric'});
   try {
-    var hijriLocale = currentLang === 'ar' ? 'ar-SA-u-ca-islamic-umalqura' : 'en-u-ca-islamic-umalqura';
+    // Append -nu-latn to the Hijri locale too so the Hijri day/year numerals
+    // stay Western/Arial-friendly digits as well, matching the rest of the app.
+    var hijriLocale = currentLang === 'ar' ? 'ar-SA-u-ca-islamic-umalqura-nu-latn' : 'en-u-ca-islamic-umalqura-nu-latn';
     var hijri = new Intl.DateTimeFormat(hijriLocale, {year:'numeric', month:'long', day:'numeric'}).format(date);
     return greg + t('ce_suffix') + ' — ' + hijri + t('ah_suffix');
   } catch(e) {
@@ -946,7 +959,7 @@ function updateZakat() {
     }
 
     html += '<div class="zamtrow"><span style="font-size:12px;color:var(--text-muted)">'+(hawlDone?t('amount_due_now'):t('amount_expected'))+'</span>'
-      +'<span style="font-size:20px;font-weight:700;color:var(--green);direction:ltr">'+Math.round(zamt).toLocaleString(locale())+'</span>'
+      +'<span style="font-size:20px;font-weight:700;color:var(--green);direction:ltr;font-family:Arial,sans-serif">'+Math.round(zamt).toLocaleString(locale())+'</span>'
       +'<span style="font-size:12px;color:var(--text-muted)">'+t('currency_egp')+'</span></div>'
       +'<div class="stxt" style="margin-top:6px">'+t('auto_update_note')+'</div>'
       +'</div>';
