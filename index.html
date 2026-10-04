@@ -168,6 +168,47 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
   .auth-card { max-width: 380px; }
 }
 @media (min-width: 1300px) { body { max-width: 1320px; } }
+
+/* ===== loading state for zakat card ===== */
+.zload{display:flex;flex-direction:column;align-items:center;gap:10px;padding:1.4rem 0;color:var(--text-muted);font-size:13px;text-align:center}
+.zspin{width:26px;height:26px;border:3px solid rgba(184,155,94,.25);border-top-color:var(--gold-light);border-radius:50%;animation:zrot .9s linear infinite}
+@keyframes zrot{to{transform:rotate(360deg)}}
+.zretry{background:transparent;border:1px solid var(--border-strong);color:var(--gold-light);border-radius:20px;padding:6px 16px;font-size:12px;cursor:pointer}
+
+/* ===== VAULT DOOR (login gate) ===== */
+.vdoor{position:relative;width:var(--s);height:var(--s);perspective:calc(var(--s)*4);flex:none}
+.auth-door{margin-bottom:18px}
+.vd-frame{position:absolute;inset:0;border-radius:50%;background:#0b0f14;border:calc(var(--s)*.04) solid #8A7544;
+  box-shadow:0 0 0 calc(var(--s)*.035) #161D25,0 0 0 calc(var(--s)*.05) #5D4F2D,0 18px 40px rgba(0,0,0,.6)}
+.vd-hole{position:absolute;inset:5%;border-radius:50%;opacity:0;transition:opacity .9s;
+  background:radial-gradient(circle,#fff8d8 0,#f3d27c 30%,#9a7526 64%,#2a1f0a 100%)}
+.vd-leaf{position:absolute;inset:5%;border-radius:50%;transform-origin:0 50%;backface-visibility:hidden;
+  transition:transform 1.2s cubic-bezier(.5,0,.2,1);
+  background:radial-gradient(circle at 35% 28%,#566574,#2f3a46 52%,#1a222b);
+  border:calc(var(--s)*.018) solid #6b5a33;box-shadow:inset 0 0 0 calc(var(--s)*.03) rgba(0,0,0,.28),inset 0 2px 8px rgba(255,255,255,.1)}
+.vd-leaf::before{content:"";position:absolute;inset:11%;border-radius:50%;border:2px solid rgba(184,155,94,.45)}
+.vd-bolt{position:absolute;left:50%;top:50%;width:calc(var(--s)*.048);height:calc(var(--s)*.048);margin:calc(var(--s)*-.024) 0 0 calc(var(--s)*-.024);
+  border-radius:50%;background:radial-gradient(circle at 35% 30%,#E3CF9F,#7A6330);box-shadow:0 1px 2px rgba(0,0,0,.7)}
+.vd-wheel{position:absolute;left:50%;top:50%;width:48%;height:48%;margin:-24% 0 0 -24%;border-radius:50%;
+  border:calc(var(--s)*.028) solid #B89B5E;box-shadow:0 2px 6px rgba(0,0,0,.5);transition:transform 1s cubic-bezier(.4,0,.2,1)}
+.vd-wheel::before,.vd-wheel::after,.vd-wheel b::before,.vd-wheel b::after{content:"";position:absolute;left:50%;top:50%;width:100%;height:calc(var(--s)*.02);
+  margin:calc(var(--s)*-.01) 0 0 -50%;background:#B89B5E}
+.vd-wheel::after{transform:rotate(90deg)}
+.vd-wheel b::before{transform:rotate(45deg)}.vd-wheel b::after{transform:rotate(135deg)}
+.vd-hub{position:absolute;left:50%;top:50%;width:20%;height:20%;margin:-10% 0 0 -10%;border-radius:50%;display:grid;place-items:center;
+  font-size:calc(var(--s)*.085);color:#1C1507;background:radial-gradient(circle at 35% 30%,#E3CF9F,#8A6F37);box-shadow:0 2px 5px rgba(0,0,0,.6)}
+.vdoor.is-spin .vd-wheel{transform:rotate(540deg)}
+.vdoor.is-open .vd-leaf{transform:rotateY(-112deg)}
+.vdoor.is-open .vd-hole{opacity:1}
+
+#gate{position:fixed;inset:0;z-index:2000;display:none;align-items:center;justify-content:center;opacity:0;
+  background:radial-gradient(ellipse at top,#1B2430,#0D1218 70%);transition:opacity .35s}
+#gate.show{display:flex}
+#gate.in{opacity:1}
+#gate.fly{opacity:0;transition:opacity .9s ease .1s}
+#gate .vdoor{transition:transform .95s cubic-bezier(.6,0,.3,1)}
+#gate.fly .vdoor{transform:scale(3.4)}
+@media (prefers-reduced-motion:reduce){.vd-leaf,.vd-wheel,.vd-hole,#gate .vdoor{transition:none}}
 </style>
 </head>
 <body>
@@ -177,10 +218,12 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
   <div class="loading-logo">⚜</div>
 </div>
 
+<div id="gate"><div class="vdoor" id="gateDoor" style="--s:min(72vw,300px)"></div></div>
+
 <!-- AUTH SCREEN -->
 <div class="auth-wrap" id="authWrap">
   <div class="lang-toggle-auth"><button class="lang-btn" id="langBtnAuth" onclick="toggleLang()">EN</button></div>
-  <div class="auth-logo">⚜</div>
+  <div class="vdoor auth-door" style="--s:132px"></div>
   <div class="auth-title" data-i18n="auth_title">ثروتك وزكاتك</div>
   <div class="auth-sub" data-i18n="auth_sub">تتبع ثروتك واحسب زكاتك</div>
   <div class="auth-card">
@@ -351,7 +394,7 @@ var authReady = auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
 
 // ===== I18N =====
 var I18N = {
-  auth_title:            { ar:'ثروتك وزكاتك', en:'Money' },
+  auth_title:            { ar:'Money', en:'Money' },
   auth_sub:              { ar:'تتبع ثروتك واحسب زكاتك', en:'Track your wealth and calculate your Zakat' },
   tab_login:             { ar:'دخول', en:'Login' },
   tab_register:          { ar:'حساب جديد', en:'New account' },
@@ -429,6 +472,10 @@ var I18N = {
   loaded_cloud:    { ar:'✓ تم تحميل بياناتك', en:'✓ Your data was loaded' },
   no_saved_data:   { ar:'لا توجد بيانات محفوظة بعد', en:'No saved data yet' },
   load_error:      { ar:'خطأ في التحميل: ', en:'Load error: ' },
+  loading_zakat:   { ar:'جاري تحميل بياناتك وأسعار اليوم...', en:'Loading your data and today\'s prices...' },
+  load_failed:     { ar:'تعذّر تحميل بياناتك، تأكد من الاتصال بالإنترنت', en:'Could not load your data. Check your connection.' },
+  btn_retry:       { ar:'إعادة المحاولة', en:'Retry' },
+  wait_loading:    { ar:'استنى لحظة، لسه بيحمّل بياناتك...', en:'One moment, still loading your data...' },
   save_error:      { ar:'فشل الحفظ: ', en:'Save failed: ' },
   last_edited:     { ar:'آخر تعديل:', en:'Last edited:' },
   updating:        { ar:'جاري التحديث...', en:'Updating...' },
@@ -500,7 +547,7 @@ window.toggleLang = function() {
   applyStaticI18n();
   if (rates.USD || rates.EUR || rates.SAR) updateRatesUI();
   if (gold.g24 || gold.g21) updateGoldUI();
-  if (assets) { updateSummary(); updateZakat(); }
+  renderAll();
 };
 
 // ===== STATE =====
@@ -511,6 +558,7 @@ var nisabDate = null;
 var curUser   = null;
 var isGuest   = false;
 var NISAB     = 85;
+var dataReady = false, pricesReady = false, loadFailed = false, pendingGate = false;
 
 // ===== AUTH HELPERS =====
 function authTab(tab) {
@@ -544,11 +592,12 @@ window.doLogin = async function() {
   setAuthErr('');
   var btn = document.getElementById('lBtn');
   btn.disabled=true; btn.textContent='...';
+  pendingGate = true;
   try {
     await authReady;
     await auth.signInWithEmailAndPassword(email, pass);
   }
-  catch(e) { setAuthErr(authErrMsg(e.code)); }
+  catch(e) { pendingGate = false; setAuthErr(authErrMsg(e.code)); }
   btn.disabled=false; btn.textContent=t('btn_login');
 };
 
@@ -562,30 +611,72 @@ window.doRegister = async function() {
   setAuthErr('');
   var btn = document.getElementById('rBtn');
   btn.disabled=true; btn.textContent='...';
+  pendingGate = true;
   try {
     await authReady;
     await auth.createUserWithEmailAndPassword(email, pass);
   }
-  catch(e) { setAuthErr(authErrMsg(e.code)); }
+  catch(e) { pendingGate = false; setAuthErr(authErrMsg(e.code)); }
   btn.disabled=false; btn.textContent=t('btn_register');
 };
 
-window.guestMode = function() {
+window.guestMode = function(auto) {
   isGuest = true;
   try { localStorage.setItem('zakat_guest','1'); } catch(e) {}
-  showApp();
-  loadLocal();
-  if (assets) { fillInputs(); updateSummary(); updateZakat(); }
+  enterApp(!auto, function() {
+    showApp();
+    loadLocal();
+    dataReady = true;
+    if (assets) fillInputs();
+    renderAll();
+  });
   fetchRates();
 };
 
 window.toggleAuth = function() {
-  if (curUser) auth.signOut();
+  if (curUser) {
+    try { localStorage.removeItem('zakat_cloud_' + curUser.uid); } catch(e) {}
+    auth.signOut();
+  }
   else {
     try { localStorage.removeItem('zakat_guest'); } catch(e) {}
     showAuth();
   }
 };
+
+// ===== VAULT GATE (login animation) =====
+function buildDoor(el) {
+  if (!el) return;
+  var h = '<div class="vd-frame"></div><div class="vd-hole"></div><div class="vd-leaf">';
+  for (var i = 0; i < 12; i++) h += '<i class="vd-bolt" style="transform:rotate(' + (i*30) + 'deg) translateY(calc(var(--s)*-.355))"></i>';
+  h += '<div class="vd-wheel"><b></b></div><div class="vd-hub">\u269C</div></div>';
+  el.innerHTML = h;
+}
+function endGate() { var g = document.getElementById('gate'); if (g) g.className = ''; }
+function startGate() {
+  var g = document.getElementById('gate'), d = document.getElementById('gateDoor');
+  if (!g || !d) return;
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  d.className = 'vdoor'; g.className = 'show';
+  void g.offsetWidth; g.classList.add('in');
+  if (reduce) { setTimeout(endGate, 500); return; }
+  setTimeout(function(){ d.classList.add('is-spin'); }, 420);
+  setTimeout(function(){ d.classList.add('is-open'); }, 1350);
+  setTimeout(function(){ g.classList.add('fly'); }, 2150);
+  setTimeout(endGate, 3150);
+}
+// run fn right away, or after the gate has covered the screen
+function enterApp(animate, fn) {
+  if (!animate) { fn(); return; }
+  startGate();
+  setTimeout(fn, 380);
+}
+function clearInputs() {
+  ['g24','g21','iSAR','iUSD','iEUR','iEGP','nisabDateInput'].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.value = '';
+  });
+}
+function renderAll() { updateSummary(); updateZakat(); }
 
 // ===== SCREENS =====
 function hideLoading() {
@@ -611,14 +702,23 @@ auth.onAuthStateChanged(async function(user) {
   if (user) {
     curUser = user;
     isGuest = false;
+    dataReady = false; loadFailed = false;
     try { localStorage.removeItem('zakat_guest'); } catch(e) {}
     document.getElementById('userBadge').textContent = user.email;
-    showApp();
+    var animate = pendingGate; pendingGate = false;
+    enterApp(animate, function() { showApp(); renderAll(); });
+    fetchRates();                 // prices load in parallel with the user's data
     await loadCloud();
-    if (assets) { fillInputs(); updateSummary(); updateZakat(); }
-    fetchRates();
+    fillInputs();
+    renderAll();
   } else {
+    var hadUser = !!curUser;
     curUser = null;
+    if (hadUser) {                // real logout: wipe everything shown on screen
+      assets = null; nisabDate = null; dataReady = false; loadFailed = false;
+      clearInputs();
+      var sc = document.getElementById('summaryCard'); if (sc) sc.style.display = 'none';
+    }
     if (!isGuest) showAuth();
     else applyStaticI18n();
   }
@@ -642,30 +742,49 @@ function saveLocal() {
 }
 
 // ===== FIRESTORE =====
+function applyCloudData(d) {
+  assets = {
+    g24: d.g24||0, g21: d.g21||0,
+    sar: d.sar||0, usd: d.usd||0,
+    eur: d.eur||0, egp: d.egp||0,
+    savedAt: d.savedAt || new Date().toISOString()
+  };
+  nisabDate = d.nisabDate || null;
+}
 async function loadCloud() {
   if (!curUser) return;
+  var uid = curUser.uid;
+  loadFailed = false;
+  // 1) instant paint from the copy saved on this device (if any)
+  try {
+    var m = localStorage.getItem('zakat_cloud_' + uid);
+    if (m) { applyCloudData(JSON.parse(m)); dataReady = true; fillInputs(); renderAll(); }
+  } catch(e) {}
+  // 2) fresh copy from the server
   setSyncing(true);
   try {
-    var snap = await db.collection('users').doc(curUser.uid).get();
+    var snap = await db.collection('users').doc(uid).get();
+    if (!curUser || curUser.uid !== uid) { setSyncing(false); return; }
     if (snap.exists) {
       var d = snap.data();
-      assets = {
-        g24: d.g24||0, g21: d.g21||0,
-        sar: d.sar||0, usd: d.usd||0,
-        eur: d.eur||0, egp: d.egp||0,
-        savedAt: d.savedAt || new Date().toISOString()
-      };
-      nisabDate = d.nisabDate || null;
+      applyCloudData(d);
+      try { localStorage.setItem('zakat_cloud_' + uid, JSON.stringify(d)); } catch(e) {}
       setSaveSt(t('loaded_cloud'), 3000);
     } else {
       setSaveSt(t('no_saved_data'), 3000);
     }
+    dataReady = true;
   } catch(e) {
     console.error('loadCloud:', e);
+    if (!dataReady) loadFailed = true;
     setSaveSt(t('load_error') + (e.code||e.message), 0);
   }
   setSyncing(false);
 }
+window.retryLoad = async function() {
+  loadFailed = false; renderAll();
+  await loadCloud(); fillInputs(); renderAll();
+};
 
 async function saveCloud() {
   if (!curUser || !assets) return;
@@ -678,6 +797,7 @@ async function saveCloud() {
       nisabDate: nisabDate || null,
       savedAt:   assets.savedAt
     });
+    try { localStorage.setItem('zakat_cloud_' + curUser.uid, JSON.stringify({ g24:assets.g24, g21:assets.g21, sar:assets.sar, usd:assets.usd, eur:assets.eur, egp:assets.egp, nisabDate:nisabDate||null, savedAt:assets.savedAt })); } catch(e) {}
   } catch(e) {
     console.error('saveCloud:', e);
     setSaveSt(t('save_error') + (e.code||e.message), 0);
@@ -721,7 +841,8 @@ window.fetchRates = async function(forceRefresh) {
     updateRatesUI(); updateGoldUI();
     setPriceWarning(false);
     document.getElementById('lastUpd').textContent = t('last_update')+' '+new Date(cache.ts).toLocaleTimeString(locale());
-    if (assets) { updateSummary(); updateZakat(); }
+    pricesReady = true;
+    renderAll();
     return;
   }
 
@@ -754,7 +875,8 @@ window.fetchRates = async function(forceRefresh) {
 
   setPriceWarning(usedStale, cache ? cache.ts : null);
 
-  if (assets) { updateSummary(); updateZakat(); }
+  pricesReady = true;
+  renderAll();
   document.getElementById('lastUpd').textContent = t('last_update')+' '+new Date().toLocaleTimeString(locale());
   if (!usedStale) saveRatesCache();
 };
@@ -777,31 +899,35 @@ function fetchJsonWithTimeout(url, ms) {
     .catch(function(){ if (id) clearTimeout(id); return null; });
 }
 
-async function fetchCurrencyRates() {
-  var d = await fetchJsonWithTimeout('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json', 6000);
-  if (d && d.usd && d.usd.egp) {
-    return { USD: d.usd.egp, EUR: d.usd.egp/d.usd.eur, SAR: d.usd.egp/d.usd.sar };
-  }
-  var d2 = await fetchJsonWithTimeout('https://open.er-api.com/v6/latest/USD', 6000);
-  if (d2 && d2.rates && d2.rates.EGP) {
-    return { USD: d2.rates.EGP, EUR: d2.rates.EGP/d2.rates.EUR, SAR: d2.rates.EGP/d2.rates.SAR };
-  }
-  return null;
+function firstValid(tasks) {
+  return new Promise(function(resolve) {
+    var left = tasks.length;
+    tasks.forEach(function(task) {
+      task().then(function(v) { if (v) resolve(v); else if (--left === 0) resolve(null); })
+            .catch(function() { if (--left === 0) resolve(null); });
+    });
+  });
 }
 
-async function fetchGoldSpotUSD() {
-  var d = await fetchJsonWithTimeout('https://api.gold-api.com/price/XAU', 6000);
-  if (d && d.price) return { oz: parseFloat(d.price) };
+function fetchCurrencyRates() {
+  return firstValid([
+    async function() {
+      var d = await fetchJsonWithTimeout('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json', 4500);
+      return (d && d.usd && d.usd.egp) ? { USD: d.usd.egp, EUR: d.usd.egp/d.usd.eur, SAR: d.usd.egp/d.usd.sar } : null;
+    },
+    async function() {
+      var d2 = await fetchJsonWithTimeout('https://open.er-api.com/v6/latest/USD', 4500);
+      return (d2 && d2.rates && d2.rates.EGP) ? { USD: d2.rates.EGP, EUR: d2.rates.EGP/d2.rates.EUR, SAR: d2.rates.EGP/d2.rates.SAR } : null;
+    }
+  ]);
+}
 
-  var d2 = await fetchJsonWithTimeout('https://data-asg.goldprice.org/dbXRates/USD', 6000);
-  if (d2 && d2.items && d2.items[0] && d2.items[0].xauPrice) return { oz: parseFloat(d2.items[0].xauPrice) };
-
-  var d3 = await fetchJsonWithTimeout('https://api.metals.live/v1/spot/gold', 6000);
-  if (d3) {
-    var oz = Array.isArray(d3) ? (d3[0] && d3[0].gold) : d3.price;
-    if (oz) return { oz: parseFloat(oz) };
-  }
-  return null;
+function fetchGoldSpotUSD() {
+  return firstValid([
+    async function() { var d = await fetchJsonWithTimeout('https://api.gold-api.com/price/XAU', 4500); return (d && d.price) ? { oz: parseFloat(d.price) } : null; },
+    async function() { var d2 = await fetchJsonWithTimeout('https://data-asg.goldprice.org/dbXRates/USD', 4500); return (d2 && d2.items && d2.items[0] && d2.items[0].xauPrice) ? { oz: parseFloat(d2.items[0].xauPrice) } : null; },
+    async function() { var d3 = await fetchJsonWithTimeout('https://api.metals.live/v1/spot/gold', 4500); var oz = d3 ? (Array.isArray(d3) ? (d3[0] && d3[0].gold) : d3.price) : null; return oz ? { oz: parseFloat(oz) } : null; }
+  ]);
 }
 
 function updateRatesUI() {
@@ -820,6 +946,7 @@ function updateGoldUI() {
 
 // ===== ASSETS =====
 window.saveAssets = async function() {
+  if (!pricesReady || (curUser && !dataReady)) { setSaveSt(t('wait_loading'), 3000); return; }
   var btn = document.getElementById('saveBtn');
   btn.disabled=true; btn.textContent=t('btn_saving');
   assets = {
@@ -899,7 +1026,7 @@ function calcTotals() {
 }
 
 function updateSummary() {
-  if (!assets) return;
+  if (!assets || !dataReady || !pricesReady) return;
   var t2 = calcTotals();
   document.getElementById('s24').textContent   = (assets.g24||0).toFixed(2);
   document.getElementById('s21').textContent   = (assets.g21||0).toFixed(2);
@@ -927,7 +1054,19 @@ function formatDateDual(date) {
 }
 
 function updateZakat() {
-  if (!assets) return;
+  var zc = document.getElementById('zakatContent');
+  if (loadFailed && !dataReady) {
+    zc.innerHTML = '<div class="zload"><div>'+t('load_failed')+'</div><button class="zretry" onclick="retryLoad()">'+t('btn_retry')+'</button></div>';
+    return;
+  }
+  if (!dataReady || !pricesReady) {
+    zc.innerHTML = '<div class="zload"><div class="zspin"></div><div>'+t('loading_zakat')+'</div></div>';
+    return;
+  }
+  if (!assets) {
+    zc.innerHTML = '<div class="stxt" style="padding:1rem 0">'+t('save_first')+'</div>';
+    return;
+  }
   var t2   = calcTotals();
   var t24  = (assets.g24||0)+((assets.g21||0)*21/24);
   var nEGP = NISAB*(gold.g24||0);
@@ -983,11 +1122,20 @@ window.showTab = function(name,el) {
   el.classList.add('active');
 };
 
+buildDoor(document.querySelector('.auth-door'));
+buildDoor(document.getElementById('gateDoor'));
+
+// show last known prices instantly (fresh ones are fetched right after)
+(function() {
+  var c = loadRatesCache();
+  if (c) { rates = c.rates; gold = c.gold; pricesReady = true; updateRatesUI(); updateGoldUI(); }
+})();
+
 applyStaticI18n();
 
 try {
   if (localStorage.getItem('zakat_guest') === '1') {
-    guestMode();
+    guestMode(true);
   }
 } catch(e) {}
 </script>
