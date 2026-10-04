@@ -302,8 +302,6 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
     <div class="card" id="summaryCard" style="display:none">
       <div class="card-title"><span class="dot"></span> <span data-i18n="card_total_assets">إجمالي ما تملكه</span></div>
       <div class="summary-grid">
-        <div class="stat-box"><div class="stat-label" data-i18n="stat_24">عيار 24</div><div class="stat-val" id="s24">0</div><div class="stat-unit" data-i18n="unit_gram">جرام</div></div>
-        <div class="stat-box"><div class="stat-label" data-i18n="stat_21">عيار 21</div><div class="stat-val" id="s21">0</div><div class="stat-unit" data-i18n="unit_gram">جرام</div></div>
         <div class="stat-box"><div class="stat-label" data-i18n="stat_gold_value">قيمة الذهب</div><div class="stat-val" id="sGold">0</div><div class="stat-unit" data-i18n="unit_egp">جنيه</div></div>
         <div class="stat-box"><div class="stat-label" data-i18n="stat_cash">النقود</div><div class="stat-val" id="sCash">0</div><div class="stat-unit" data-i18n="unit_egp">جنيه</div></div>
       </div>
@@ -1028,8 +1026,6 @@ function calcTotals() {
 function updateSummary() {
   if (!assets || !dataReady || !pricesReady) return;
   var t2 = calcTotals();
-  document.getElementById('s24').textContent   = (assets.g24||0).toFixed(2);
-  document.getElementById('s21').textContent   = (assets.g21||0).toFixed(2);
   document.getElementById('sGold').textContent = Math.round(t2.gEGP).toLocaleString(locale());
   document.getElementById('sCash').textContent = Math.round(t2.cEGP).toLocaleString(locale());
   document.getElementById('sTotal').textContent= Math.round(t2.total).toLocaleString(locale());
