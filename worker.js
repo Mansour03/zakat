@@ -1,227 +1,3 @@
-/**
- * Zakat app — Egyptian gold price relay (Cloudflare Worker, free tier)
- *
- * What it does
- *  - Reads the live Egyptian gold table from TWO independent public pages.
- *  - Rejects readings that don't make sense (wrong 21K/24K ratio, impossible
- *    USD/EGP, stale page) and cross-checks the two sources against each other.
- *  - Caches the result in KV so 10,000 app users cost the source sites
- *    only ~1 request per 5 minutes.
- *  - Serves JSON with CORS so the browser app can read it.
- *
- * Setup: see the short steps in the chat. You need one KV namespace bound
- * to this Worker under the variable name  PRICES.
- */
-
-const SOURCES = [
-  { name: 'gold-price-live',  url: 'https://gold-price-live.com/',          parse: parseGoldPriceLive  },
-  { name: 'gold-price-daily', url: 'https://gold-price-daily.com/gold-eg/', parse: parseGoldPriceDaily }
-];
-
-const REFRESH_AFTER_SEC = 300;   // scrape at most once per 5 minutes
-const MAX_SOURCE_GAP    = 0.015; // the two sources must agree within 1.5%
-const OUNCE_GRAMS       = 31.1035;
-
-export default {
-  // Browser requests
-  async fetch(request, env, ctx) {
-    if (request.method === 'OPTIONS') return new Response(null, { headers: corsHeaders() });
-    try {
-      const data = await getPrices(env);
-      if (!data) return json({ ok: false, error: 'no_source_available' }, 503);
-      return json(data, 200, { 'Cache-Control': 'public, max-age=60' });
-    } catch (e) {
-      return json({ ok: false, error: String(e && e.message || e) }, 500);
-    }
-  },
-  // Optional cron trigger (every 5 min) keeps the cache warm
-  async scheduled(event, env, ctx) {
-    ctx.waitUntil(refresh(env));
-  }
-};
-
-/* ---------- cache layer ---------- */
-
-async function getPrices(env) {
-  const saved = await env.PRICES.get('prices', 'json');
-  const ageSec = saved ? (Date.now() - saved.fetchedAt) / 1000 : Infinity;
-  if (saved && ageSec < REFRESH_AFTER_SEC) return { ...saved, ageSec: Math.round(ageSec) };
-
-  const fresh = await refresh(env);
-  if (fresh) return { ...fresh, ageSec: 0 };
-
-  // Every source failed: serve the last good reading, clearly marked stale.
-  if (saved) return { ...saved, ageSec: Math.round(ageSec), stale: true };
-  return null;
-}
-
-async function refresh(env) {
-  const data = await buildPrices();
-  if (data) await env.PRICES.put('prices', JSON.stringify(data));
-  return data;
-}
-
-/* ---------- scrape + validate + agree ---------- */
-
-async function buildPrices() {
-  const raw = await Promise.all(SOURCES.map(async (s) => {
-    try {
-      const html = await fetchText(s.url);
-      const r = s.parse(html);
-      return r ? { name: s.name, ...r } : { name: s.name, error: 'parse_failed' };
-    } catch (e) {
-      return { name: s.name, error: String(e && e.message || e) };
-    }
-  }));
-  return combine(raw);
-}
-
-// Pure function (easy to test): takes parsed readings, returns the final answer or null.
-function combine(raw) {
-  const usdRef = (raw.find(r => !r.error && r.usdBank) || {}).usdBank || null;
-  const good = [];
-  const report = [];
-
-  for (const r of raw) {
-    if (r.error) { report.push({ name: r.name, ok: false, why: r.error }); continue; }
-    const why = insane(r, usdRef);
-    if (why) { report.push({ name: r.name, ok: false, why }); continue; }
-    good.push(r);
-    report.push({ name: r.name, ok: true, k21: r.k21, k24: r.k24 });
-  }
-  if (!good.length) return null;
-
-  let chosen, confidence, note = null;
-  if (good.length === 1) {
-    chosen = { k21: good[0].k21, k24: good[0].k24 };
-    confidence = 'medium';
-    note = 'single_source';
-  } else {
-    const [a, b] = good;
-    const gap = Math.abs(a.k21 - b.k21) / ((a.k21 + b.k21) / 2);
-    if (gap <= MAX_SOURCE_GAP) {
-      chosen = { k21: round2((a.k21 + b.k21) / 2), k24: round2((a.k24 + b.k24) / 2) };
-      confidence = 'high';
-    } else {
-      // Disagreement: trust the source whose implied USD/EGP is closest to the bank rate.
-      const dist = (r) => (usdRef && r.ounceUsd) ? Math.abs(r.k24 / (r.ounceUsd / OUNCE_GRAMS) - usdRef) : Infinity;
-      const pick = dist(a) <= dist(b) ? a : b;
-      chosen = { k21: pick.k21, k24: pick.k24 };
-      confidence = 'medium';
-      note = 'sources_disagree';
-    }
-  }
-
-  const ounce = (good.find(r => r.ounceUsd) || {}).ounceUsd || null;
-  return {
-    ok: true,
-    fetchedAt: Date.now(),
-    asOf: new Date().toISOString(),
-    gold: { k21: chosen.k21, k24: chosen.k24 },   // EGP per gram, mid price
-    usdBank: usdRef,
-    ounceUsd: ounce,
-    confidence,
-    note,
-    sources: report
-  };
-}
-
-// Returns a reason string if the reading looks wrong, otherwise null.
-function insane(r, usdRef) {
-  if (!(r.k24 > 0) || !(r.k21 > 0)) return 'missing_karat';
-  const ratio = r.k21 / r.k24;                       // should be 21/24 = 0.875
-  if (ratio < 0.865 || ratio > 0.885) return 'bad_21_24_ratio';
-  if (r.staleMinutes != null && r.staleMinutes > 120) return 'page_is_stale';
-  if (usdRef && r.ounceUsd) {
-    const implied = r.k24 / (r.ounceUsd / OUNCE_GRAMS);   // implied EGP per USD
-    const rel = implied / usdRef;
-    if (rel < 0.90 || rel > 1.12) return 'implied_usd_out_of_range';
-  }
-  return null;
-}
-
-/* ---------- source parsers (work on page TEXT, not CSS selectors, so they survive layout changes) ---------- */
-
-const NUM = '([\\d][\\d,]*(?:\\.\\d+)?)';
-const toNum = (s) => parseFloat(String(s).replace(/,/g, ''));
-const round2 = (n) => Math.round(n * 100) / 100;
-
-function toText(html) {
-  return String(html)
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')
-    .replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))   // Arabic-Indic digits -> 0-9
-    .replace(/[|]/g, ' ')
-    .replace(/\s+/g, ' ');
-}
-
-// Source A: table rows look like  "ذهب عيار 21  6165 جنيه مصري  6145 جنيه مصري"  (buy, sell)
-function parseGoldPriceLive(html) {
-  const t = toText(html);
-  const row = (k) => {
-    const m = t.match(new RegExp('ذهب\\s*عيار\\s*' + k + '\\s+' + NUM + '\\s*جنيه(?:\\s*مصري)?\\s+' + NUM + '\\s*جنيه'));
-    return m ? round2((toNum(m[1]) + toNum(m[2])) / 2) : null;   // mid of buy/sell
-  };
-  const usd = t.match(/الدولار\s*في\s*البنوك\s+([\d][\d,]*(?:\.\d+)?)/);
-  const oz  = t.match(new RegExp('أونصة\\s*الذهب\\s+' + NUM + '\\s*دولار'));
-  const k21 = row('21'), k24 = row('24');
-  if (!k21 || !k24) return null;
-  return { k21, k24, usdBank: usd ? toNum(usd[1]) : null, ounceUsd: oz ? toNum(oz[1]) : null };
-}
-
-// Source B: rows look like  "غرام ذهب عيار 21  6155.36  116.57"  (EGP, USD)
-function parseGoldPriceDaily(html) {
-  const t = toText(html);
-  const row = (k) => {
-    const m = t.match(new RegExp('غرام\\s*ذهب\\s*عيار\\s*' + k + '\\s+' + NUM));
-    return m ? toNum(m[1]) : null;
-  };
-  const oz  = t.match(new RegExp('أونصة\\s*ذهب\\s*عيار\\s*24\\s+' + NUM + '\\s+' + NUM));
-  const age = t.match(/آخر\s*تحديث\s*قبل\s*(\d+)\s*دقيقة/);
-  const k21 = row('21'), k24 = row('24');
-  if (!k21 || !k24) return null;
-  return {
-    k21, k24,
-    usdBank: null,
-    ounceUsd: oz ? toNum(oz[2]) : null,           // second number = USD
-    staleMinutes: age ? parseInt(age[1], 10) : null
-  };
-}
-
-/* ---------- helpers ---------- */
-
-async function fetchText(url) {
-  const res = await fetch(url, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ZakatApp/1.0)', 'Accept-Language': 'ar,en;q=0.8' },
-    signal: AbortSignal.timeout(8000),
-    cf: { cacheTtl: 60 }
-  });
-  if (!res.ok) throw new Error('http_' + res.status);
-  return res.text();
-}
-
-function corsHeaders() {
-  return {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type'
-  };
-}
-
-function json(obj, status = 200, extra = {}) {
-  return new Response(JSON.stringify(obj), {
-    status,
-    headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders(), ...extra }
-  });
-}
-```[cite: 1]
-
----
-
-### 2. واجهة المستخدم (`index (5).html`)
-```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -232,13 +8,10 @@ function json(obj, status = 200, extra = {}) {
 /* ===== VAULT THEME — calm steel + brass. Variable NAMES kept so the JS/HTML keep working. ===== */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  /* brass accents (names kept: --gold*) */
   --gold: #B89B5E; --gold-light: #E3CF9F; --gold-dark: #CDB67E;
-  /* steel surfaces */
   --gold-bg: #11171E; --gold-bg2: #1A222C; --card-bg: #202A35;
   --border: rgba(184,155,94,0.22); --border-strong: rgba(184,155,94,0.45);
   --text: #E8E2D0; --text-muted: #A9A38F; --text-hint: #8A8672;
-  /* "not eligible" = soft clay, "eligible" = champagne (no green anywhere) */
   --red: #D9917F; --red-bg: rgba(217,145,127,0.09);
   --green: #E3CF9F; --green-bg: rgba(227,207,159,0.08);
   --steel-hi: #2D3A48; --steel-lo: #161D25;
@@ -247,7 +20,6 @@ function json(obj, status = 200, extra = {}) {
 body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); min-height: 100vh; max-width: 440px; margin: 0 auto; padding-bottom: 2rem;
   background: radial-gradient(ellipse at top, #1B2430 0%, #11171E 65%) fixed; color-scheme: dark; }
 
-/* ---- vault wheel (used for loading + auth logo) ---- */
 .loading-logo, .auth-logo { width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center; font-size: 34px; color: var(--gold-light);
   background:
     radial-gradient(circle, #1A222C 0 36%, transparent 37%),
@@ -258,7 +30,6 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
 .auth-logo { margin-bottom: 18px; }
 @keyframes pulse { 0%,100%{opacity:.55} 50%{opacity:1} }
 
-/* LOADING + AUTH screens */
 .loading-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; background:radial-gradient(ellipse at top,#1B2430,#0D1218 70%); }
 .auth-wrap { display:none; position:relative; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:2rem 1.5rem; background:radial-gradient(ellipse at top,#1B2430,#0D1218 70%); }
 .auth-title { font-size:28px; font-weight:700; color:var(--gold-light); letter-spacing:3px; margin-bottom:4px; }
@@ -266,7 +37,6 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
 .lang-toggle-auth { position:absolute; top:16px; inset-inline-end:16px; }
 .lang-btn { background:rgba(184,155,94,0.12); border:1px solid var(--border-strong); color:var(--gold-light); padding:5px 12px; border-radius:20px; font-size:11px; font-weight:700; cursor:pointer; letter-spacing:1px; }
 
-/* ---- steel panels with rivets ---- */
 .auth-card, .card { position:relative; background:linear-gradient(160deg,var(--steel-hi),var(--card-bg) 45%,var(--steel-lo)); border:1px solid var(--border-strong); border-radius:var(--radius);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.06), inset 0 0 0 4px rgba(0,0,0,.18), 0 8px 22px rgba(0,0,0,.35); }
 .auth-card { padding:1.5rem; width:100%; max-width:340px; }
@@ -278,7 +48,6 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
 .card-title { font-size:13px; font-weight:600; color:var(--gold-light); margin-bottom:.75rem; display:flex; align-items:center; gap:6px; padding:0 14px; }
 .dot { width:6px; height:6px; background:var(--gold); border-radius:50%; display:inline-block; }
 
-/* auth tabs + inputs (inputs = engraved slots) */
 .auth-tabs { display:flex; border-bottom:1px solid var(--border); margin-bottom:1.25rem; }
 .auth-tab { flex:1; padding:8px 0; text-align:center; font-size:13px; font-weight:500; color:var(--text-muted); cursor:pointer; border-bottom:2px solid transparent; }
 .auth-tab.active { color:var(--gold-light); border-bottom-color:var(--gold); }
@@ -289,7 +58,6 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
 .auth-input:focus, .input-group input:focus { outline:none; border-color:var(--gold); box-shadow: inset 0 2px 5px rgba(0,0,0,.55), 0 0 0 2px rgba(184,155,94,.2); }
 .auth-input::placeholder, .input-group input::placeholder { color:#5E6572; }
 
-/* brass buttons */
 .auth-btn, .save-btn { width:100%; background:linear-gradient(180deg,#D3BC84,#A98A4A 55%,#8A6F37); color:#1C1507; border:1px solid #6B5528; border-radius:var(--radius-sm);
   padding:11px; font-size:14px; font-weight:700; cursor:pointer; box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 3px 8px rgba(0,0,0,.4); }
 .save-btn { margin-top:4px; }
@@ -298,7 +66,6 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
 .auth-err { font-size:12px; color:var(--red); text-align:center; margin-top:8px; min-height:18px; }
 .guest-btn { width:100%; background:transparent; border:1px dashed var(--border-strong); border-radius:var(--radius-sm); padding:9px; font-size:13px; color:var(--text-muted); cursor:pointer; margin-top:8px; }
 
-/* APP header */
 .app-wrap { display:none; }
 .header { background:linear-gradient(180deg,#2A3542,#18202A); padding:1.1rem 1.25rem 0.6rem; position:sticky; top:0; z-index:100; border-bottom:2px solid #6B5528; box-shadow:0 6px 18px rgba(0,0,0,.45); }
 .header-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.6rem; }
@@ -323,7 +90,6 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
 .input-group { display:flex; flex-direction:column; gap:4px; }
 .input-group label { font-size:11px; color:var(--text-hint); font-weight:500; }
 
-/* deposit-box stats */
 .summary-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
 .stat-box { background:linear-gradient(160deg,#1F2933,#141B23); border:1px solid var(--border); border-radius:var(--radius-sm); padding:.75rem; text-align:center; box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
 .stat-label { font-size:10px; color:var(--text-hint); margin-bottom:4px; font-weight:500; }
@@ -334,7 +100,6 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
 .stat-box.hl .stat-val { color:#1C1507; font-size:22px; }
 .stat-box.hl .stat-unit { color:#3A2C0E; }
 
-/* zakat result */
 .zakat-card { border-radius:var(--radius); padding:1.1rem; margin-bottom:1rem; }
 .zakat-card.yes { background:var(--green-bg); border:1px solid rgba(227,207,159,0.35); }
 .zakat-card.no  { background:var(--red-bg);   border:1px solid rgba(217,145,127,0.35); }
@@ -353,7 +118,6 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
 .by2 { background:linear-gradient(90deg,#B89B5E,#E3CF9F); }
 .bn2 { background:linear-gradient(90deg,#B77562,#D9917F); }
 
-/* prices */
 .gold-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
 .gold-box { background:linear-gradient(160deg,#2A2A22,#1A1A15); border:1px solid var(--border-strong); border-radius:var(--radius-sm); padding:.75rem; text-align:center; }
 .karat { font-size:11px; color:var(--gold); font-weight:600; }
@@ -375,15 +139,12 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
 .sync.on { background:var(--gold-light); animation:sp 1s infinite; }
 @keyframes sp { 0%,100%{opacity:1}50%{opacity:.3} }
 
-/* numbers across the app always render as plain Western digits in Arial,
-   regardless of UI language (RTL Arabic text stays Segoe UI/Tahoma) */
 .stat-val, .gprice, .rval, .price-pill .val, .zamtrow span[style*="direction:ltr"] {
   font-family: Arial, Helvetica, sans-serif;
   font-variant-numeric: normal;
   font-feature-settings: "lnum" 1;
 }
 
-/* DESKTOP: three sections side by side */
 @media (min-width: 900px) {
   body { max-width: 1180px; padding: 0 1.5rem 2.5rem; }
   .header { border-radius: 0 0 var(--radius) var(--radius); }
@@ -398,12 +159,10 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
 </head>
 <body>
 
-<!-- LOADING SCREEN (shown until we know whether the user is logged in) -->
 <div class="loading-wrap" id="loadingWrap">
   <div class="loading-logo">⚜</div>
 </div>
 
-<!-- AUTH SCREEN -->
 <div class="auth-wrap" id="authWrap">
   <div class="lang-toggle-auth"><button class="lang-btn" id="langBtnAuth" onclick="toggleLang()">EN</button></div>
   <div class="auth-logo">⚜</div>
@@ -430,7 +189,6 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
   </div>
 </div>
 
-<!-- APP SCREEN -->
 <div class="app-wrap" id="appWrap">
   <div class="header">
     <div class="header-top">
@@ -545,12 +303,10 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
   </div>
 </div>
 
-<!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
-// ===== FIREBASE =====
 firebase.initializeApp({
   apiKey:            "AIzaSyAP6cb9HerGIdvaKqJtEZF4a4HVS4PpVqc",
   authDomain:        "zakah-89cd7.firebaseapp.com",
@@ -570,13 +326,9 @@ try {
 
 var authReady = auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
   .catch(function(e) {
-    console.error('setPersistence(LOCAL) failed, falling back to SESSION:', e);
-    return auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(function(e2){
-      console.error('setPersistence(SESSION) also failed:', e2);
-    });
+    return auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(function(e2){});
   });
 
-// ===== I18N =====
 var I18N = {
   auth_title:            { ar:'زكاة', en:'Zakat' },
   auth_sub:              { ar:'تتبع ثروتك واحسب زكاتك', en:'Track your wealth and calculate your Zakat' },
@@ -662,9 +414,9 @@ var I18N = {
   price_warning_stale: { ar:'تعذر تحديث الأسعار الآن — المعروض من آخر تحديث ناجح بتاريخ:', en:'Could not refresh live prices — showing the last successful update from:' },
   price_warning_never: { ar:'⚠️ تعذر الوصول لأي مصدر أسعار حالياً، والرقم المعروض تقديري فقط وقد يختلف كثيراً عن السعر الفعلي', en:'⚠️ Could not reach any price source right now — the number shown is a rough estimate and may differ a lot from the real price' },
   last_update:     { ar:'آخر تحديث:', en:'Last update:' },
-  src_local:        { ar:'المصدر: سوق الصاغة المصري (مصدرين متطابقين)', en:'Source: Egyptian gold market (two matching sources)' },
-  src_local_medium: { ar:'المصدر: سوق الصاغة المصري (مصدر واحد أو المصادر غير متفقة تماماً)', en:'Source: Egyptian gold market (single source, or sources slightly disagree)' },
-  src_calc:         { ar:'⚠️ سعر تقديري محسوب من الأونصة العالمية والدولار — قد يختلف عن سعر الصاغة بعشرات الجنيهات', en:'⚠️ Estimate computed from the global ounce and the dollar — may differ from shop prices by tens of EGP' },
+  src_local:        { ar:'المصدر: سوق الصاغة المصري (موقع eDahab)', en:'Source: Egyptian gold market (eDahab)' },
+  src_local_medium: { ar:'المصدر: سوق الصاغة المصري', en:'Source: Egyptian gold market' },
+  src_calc:         { ar:'⚠️ سعر تقديري محسوب من الأونصة العالمية والدولار', en:'⚠️ Estimate computed from global ounce and dollar' },
 
   badge_reached_nisab: { ar:'✓ بلغت النصاب', en:'✓ Nisab reached' },
   title_eligible:      { ar:'أنت مستحق للزكاة', en:'You owe Zakat' },
@@ -680,7 +432,7 @@ var I18N = {
   days_unit:           { ar:'يوم', en:'days' },
   amount_due_now:      { ar:'مقدار الزكاة المستحقة الآن (2.5%)', en:'Zakat amount due now (2.5%)' },
   amount_expected:     { ar:'المقدار المتوقع حالياً لو استمر الحول (2.5%)', en:'Expected amount if the hawl continues (2.5%)' },
-  auto_update_note:    { ar:'هذا المبلغ بيتحدث تلقائياً كل ما تعدّل بياناتك أو تتغير الأسعار، وهيبقى نهائي في تاريخ الاستحقاق', en:'This amount updates automatically whenever you edit your data or prices change, and becomes final on the due date' },
+  auto_update_note:    { ar:'هذا المبلغ بيتحدث تلقائياً كل ما تعدّل بياناتك أو تتغير الأسعار', en:'This amount updates automatically' },
   badge_not_reached:   { ar:'✗ لم تبلغ النصاب', en:'✗ Nisab not reached' },
   title_not_eligible:  { ar:'لست مستحقاً للزكاة حالياً', en:'You do not owe Zakat currently' },
   gold24_equiv:        { ar:'معادل ذهبك عيار 24:', en:'Your 24K gold equivalent:' },
@@ -701,9 +453,6 @@ function t(key) {
   if (!e) return key;
   return e[currentLang] || e.ar;
 }
-// Always force plain Western (Latin) digits via the -u-nu-latn Unicode
-// extension, even for the Arabic locale, so numbers never switch to
-// Eastern Arabic-Indic digits (٠١٢٣) and stay visually consistent in Arial.
 function locale() { return currentLang === 'ar' ? 'ar-EG-u-nu-latn' : 'en-US-u-nu-latn'; }
 
 function applyStaticI18n() {
@@ -734,7 +483,6 @@ window.toggleLang = function() {
   if (assets) { updateSummary(); updateZakat(); }
 };
 
-// ===== STATE =====
 var rates     = { USD:null, EUR:null, SAR:null };
 var gold      = { g24:null, g21:null };
 var assets    = null;
@@ -743,7 +491,6 @@ var curUser   = null;
 var isGuest   = false;
 var NISAB     = 85;
 
-// ===== AUTH HELPERS =====
 function authTab(tab) {
   document.getElementById('fLogin').style.display = tab==='login'?'block':'none';
   document.getElementById('fReg').style.display   = tab==='reg'  ?'block':'none';
@@ -818,7 +565,6 @@ window.toggleAuth = function() {
   }
 };
 
-// ===== SCREENS =====
 function hideLoading() {
   var l = document.getElementById('loadingWrap');
   if (l) l.style.display = 'none';
@@ -837,7 +583,6 @@ function showAuth() {
   applyStaticI18n();
 }
 
-// ===== AUTH STATE =====
 auth.onAuthStateChanged(async function(user) {
   if (user) {
     curUser = user;
@@ -855,7 +600,6 @@ auth.onAuthStateChanged(async function(user) {
   }
 });
 
-// ===== LOCAL STORAGE =====
 function loadLocal() {
   try {
     var a = localStorage.getItem('zakat_a');
@@ -872,7 +616,6 @@ function saveLocal() {
   } catch(e) {}
 }
 
-// ===== FIRESTORE =====
 async function loadCloud() {
   if (!curUser) return;
   setSyncing(true);
@@ -892,7 +635,6 @@ async function loadCloud() {
       setSaveSt(t('no_saved_data'), 3000);
     }
   } catch(e) {
-    console.error('loadCloud:', e);
     setSaveSt(t('load_error') + (e.code||e.message), 0);
   }
   setSyncing(false);
@@ -910,7 +652,6 @@ async function saveCloud() {
       savedAt:   assets.savedAt
     });
   } catch(e) {
-    console.error('saveCloud:', e);
     setSaveSt(t('save_error') + (e.code||e.message), 0);
   }
   setSyncing(false);
@@ -927,18 +668,13 @@ function setSaveSt(msg, ms) {
   if (ms) setTimeout(function(){ el.textContent=''; }, ms);
 }
 
-// ===== RATES & GOLD =====
-// Paste your Cloudflare Worker address here (see worker.js). It returns the live Egyptian
-// market price (gold-shop prices + bank dollar). While this is empty, or if the Worker is
-// unreachable, the app falls back to an estimate computed from the global ounce price —
-// and says so on screen instead of pretending it is the shop price.
+// ضع رابط الـ Worker الخاص بك هنا بعد نشره
 var PRICE_API = '';
 
 var RATES_CACHE_KEY = 'zakat_rates_cache';
 var RATES_CACHE_TTL = 5*60*1000;
-var LOCAL_MAX_AGE_SEC = 3*3600;   // ignore Egyptian-market readings older than 3 hours
+var LOCAL_MAX_AGE_SEC = 3*3600;
 
-// Where the gold price on screen came from: 'local' (Egyptian market) or 'calc' (global-ounce estimate)
 var priceSrc = null, priceAsOf = null, priceConf = null;
 
 function loadRatesCache() {
@@ -976,9 +712,6 @@ window.fetchRates = async function(forceRefresh) {
 
   if (curRes) {
     rates.USD = curRes.USD; rates.EUR = curRes.EUR; rates.SAR = curRes.SAR;
-    // The Egyptian bank dollar is closer to what banks actually pay than a mid-market feed.
-    // Use it only if it is within 5% of the feed (sanity check), and move EUR/SAR by the same
-    // factor so the cross rates stay consistent.
     if (local && local.usdBank && Math.abs(local.usdBank / rates.USD - 1) < 0.05) {
       var f = local.usdBank / rates.USD;
       rates.USD = local.usdBank; rates.EUR = rates.EUR * f; rates.SAR = rates.SAR * f;
@@ -1001,8 +734,6 @@ window.fetchRates = async function(forceRefresh) {
     gold = cache.gold; usedStale = true;
     priceSrc = cache.src || 'calc'; priceAsOf = cache.asOf || null; priceConf = cache.conf || null;
   } else {
-    // Last resort only (no live source and no earlier reading). Values are from 2026-10-14
-    // and WILL go stale, which is why the red warning is shown whenever this branch runs.
     gold.g24=7046; gold.g21=6165; usedStale = true;
     priceSrc = 'calc'; priceAsOf = null; priceConf = null;
   }
@@ -1027,22 +758,18 @@ function setPriceWarning(stale, lastGoodTs) {
     : t('price_warning_never');
 }
 
-// Egyptian-market feed from the Worker. Returns null (and the app falls back to the
-// global-ounce estimate) if it is not configured, unreachable, too old, or looks wrong.
 async function fetchLocalPrices() {
   if (!PRICE_API) return null;
   var d = await fetchJsonWithTimeout(PRICE_API, 8000);
   if (!d || !d.ok || !d.gold) return null;
   var k24 = Number(d.gold.k24), k21 = Number(d.gold.k21);
   if (!(k24 > 1000 && k24 < 100000) || !(k21 > 1000 && k21 < 100000)) return null;
-  var ratio = k21 / k24;                                   // must be close to 21/24 = 0.875
+  var ratio = k21 / k24;
   if (ratio < 0.86 || ratio > 0.89) return null;
   if (d.ageSec != null && d.ageSec > LOCAL_MAX_AGE_SEC) return null;
   return { k24: k24, k21: k21, usdBank: Number(d.usdBank) || null, asOf: d.asOf, confidence: d.confidence || 'medium' };
 }
 
-// Tells the user where the gold price came from, and when. Red if it is only an estimate
-// or the Egyptian reading is more than 30 minutes old.
 function renderSourceNote() {
   var el = document.getElementById('goldSrc');
   if (!el) return;
@@ -1113,7 +840,6 @@ function updateGoldUI() {
   document.getElementById('ph21').textContent = gold.g21?gold.g21.toFixed(0):'--';
 }
 
-// ===== ASSETS =====
 window.saveAssets = async function() {
   var btn = document.getElementById('saveBtn');
   btn.disabled=true; btn.textContent=t('btn_saving');
@@ -1211,8 +937,6 @@ var HAWL_DAYS = 354;
 function formatDateDual(date) {
   var greg = date.toLocaleDateString(locale(), {year:'numeric', month:'long', day:'numeric'});
   try {
-    // Append -nu-latn to the Hijri locale too so the Hijri day/year numerals
-    // stay Western/Arial-friendly digits as well, matching the rest of the app.
     var hijriLocale = currentLang === 'ar' ? 'ar-SA-u-ca-islamic-umalqura-nu-latn' : 'en-u-ca-islamic-umalqura-nu-latn';
     var hijri = new Intl.DateTimeFormat(hijriLocale, {year:'numeric', month:'long', day:'numeric'}).format(date);
     return greg + t('ce_suffix') + ' — ' + hijri + t('ah_suffix');
@@ -1288,4 +1012,3 @@ try {
 </script>
 </body>
 </html>
-```[cite: 2]
