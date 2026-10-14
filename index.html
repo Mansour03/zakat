@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>زكاة</title>
+<title>Money</title>
 <style>
-/* ===== VAULT THEME — calm steel + brass. Variable NAMES kept so the JS/HTML keep working. ===== */
+/* ===== VAULT THEME — calm steel + brass ===== */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
   --gold: #B89B5E; --gold-light: #E3CF9F; --gold-dark: #CDB67E;
@@ -166,7 +166,7 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
 <div class="auth-wrap" id="authWrap">
   <div class="lang-toggle-auth"><button class="lang-btn" id="langBtnAuth" onclick="toggleLang()">EN</button></div>
   <div class="auth-logo">⚜</div>
-  <div class="auth-title" data-i18n="auth_title">زكاة</div>
+  <div class="auth-title" data-i18n="auth_title">ثروتك وزكاتك</div>
   <div class="auth-sub" data-i18n="auth_sub">تتبع ثروتك واحسب زكاتك</div>
   <div class="auth-card">
     <div class="auth-tabs">
@@ -193,7 +193,7 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
   <div class="header">
     <div class="header-top">
       <div>
-        <div class="app-title">⚜ <span data-i18n="app_title">زكاة</span> <span class="sync" id="syncDot"></span></div>
+        <div class="app-title">⚜ <span data-i18n="app_title">ثروتك وزكاتك</span> <span class="sync" id="syncDot"></span></div>
         <div class="user-badge" id="userBadge" data-i18n="badge_guest">زائر</div>
       </div>
       <div class="hdr-btns">
@@ -330,7 +330,7 @@ var authReady = auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
   });
 
 var I18N = {
-  auth_title:            { ar:'زكاة', en:'Zakat' },
+  auth_title:            { ar:'ثروتك وزكاتك', en:'Money' },
   auth_sub:              { ar:'تتبع ثروتك واحسب زكاتك', en:'Track your wealth and calculate your Zakat' },
   tab_login:             { ar:'دخول', en:'Login' },
   tab_register:          { ar:'حساب جديد', en:'New account' },
@@ -341,7 +341,7 @@ var I18N = {
   ph_password_confirm:   { ar:'تأكيد كلمة المرور', en:'Confirm password' },
   btn_register:          { ar:'إنشاء حساب', en:'Create account' },
   btn_guest:             { ar:'متابعة بدون حساب', en:'Continue without an account' },
-  app_title:             { ar:'زكاة', en:'Zakat' },
+  app_title:             { ar:'ثروتك وزكاتك', en:'Money' },
   badge_guest:           { ar:'زائر', en:'Guest' },
   btn_logout:            { ar:'خروج', en:'Logout' },
   tab_assets:            { ar:'أصولي', en:'My Assets' },
@@ -458,7 +458,7 @@ function locale() { return currentLang === 'ar' ? 'ar-EG-u-nu-latn' : 'en-US-u-n
 function applyStaticI18n() {
   document.documentElement.lang = currentLang;
   document.documentElement.dir  = currentLang === 'ar' ? 'rtl' : 'ltr';
-  document.title = t('app_title');
+  document.title = 'Money';
   document.querySelectorAll('[data-i18n]').forEach(function(el) {
     el.innerHTML = t(el.getAttribute('data-i18n'));
   });
@@ -668,7 +668,7 @@ function setSaveSt(msg, ms) {
   if (ms) setTimeout(function(){ el.textContent=''; }, ms);
 }
 
-// ضع رابط الـ Worker الخاص بك هنا بعد نشره
+// ⚠️ حط رابط الـ Worker بتاعك هنا بعد ما ترفعه على Cloudflare
 var PRICE_API = 'https://money-zakat.walidmansour83.workers.dev';
 
 var RATES_CACHE_KEY = 'zakat_rates_cache';
@@ -705,38 +705,39 @@ window.fetchRates = async function(forceRefresh) {
 
   document.getElementById('goldSt').textContent = t('updating');
 
-  var results = await Promise.all([fetchCurrencyRates(), fetchGoldSpotUSD(), fetchLocalPrices()]);
-  var curRes = results[0], goldRes = results[1], local = results[2];
-
+  var local = await fetchLocalPrices();
   var usedStale = false;
 
-  if (curRes) {
-    rates.USD = curRes.USD; rates.EUR = curRes.EUR; rates.SAR = curRes.SAR;
-    if (local && local.usdBank && Math.abs(local.usdBank / rates.USD - 1) < 0.05) {
-      var f = local.usdBank / rates.USD;
-      rates.USD = local.usdBank; rates.EUR = rates.EUR * f; rates.SAR = rates.SAR * f;
+  if (local && local.gold) {
+    gold.g24 = local.gold.k24;
+    gold.g21 = local.gold.k21;
+    if (local.rates) {
+      rates.USD = local.rates.USD;
+      rates.EUR = local.rates.EUR;
+      rates.SAR = local.rates.SAR;
     }
-  } else if (cache && cache.rates && cache.rates.USD) {
-    rates = cache.rates; usedStale = true;
-  } else {
-    rates.USD=50.5; rates.EUR=55.8; rates.SAR=13.5; usedStale = true;
-  }
-  updateRatesUI();
-
-  if (local) {
-    gold.g24 = local.k24; gold.g21 = local.k21;
-    priceSrc = 'local'; priceAsOf = local.asOf; priceConf = local.confidence;
-  } else if (goldRes && goldRes.oz && rates.USD) {
-    gold.g24 = (goldRes.oz/31.1035)*rates.USD;
-    gold.g21 = gold.g24*(21/24);
-    priceSrc = 'calc'; priceAsOf = null; priceConf = null;
+    priceSrc = 'local';
+    priceAsOf = local.asOf;
+    priceConf = local.confidence;
   } else if (cache && cache.gold && cache.gold.g24) {
-    gold = cache.gold; usedStale = true;
-    priceSrc = cache.src || 'calc'; priceAsOf = cache.asOf || null; priceConf = cache.conf || null;
+    gold = cache.gold;
+    rates = cache.rates;
+    usedStale = true;
+    priceSrc = cache.src || 'calc';
+    priceAsOf = cache.asOf || null;
+    priceConf = cache.conf || null;
   } else {
-    gold.g24=7046; gold.g21=6165; usedStale = true;
-    priceSrc = 'calc'; priceAsOf = null; priceConf = null;
+    // Fallback static
+    gold.g24 = 7000;
+    gold.g21 = 6125;
+    rates.USD = 53.17;
+    rates.EUR = 59.61;
+    rates.SAR = 14.16;
+    usedStale = true;
+    priceSrc = 'calc';
   }
+
+  updateRatesUI();
   updateGoldUI();
   renderSourceNote();
   document.getElementById('goldSt').textContent = '';
@@ -762,26 +763,20 @@ async function fetchLocalPrices() {
   if (!PRICE_API) return null;
   var d = await fetchJsonWithTimeout(PRICE_API, 8000);
   if (!d || !d.ok || !d.gold) return null;
-  var k24 = Number(d.gold.k24), k21 = Number(d.gold.k21);
-  if (!(k24 > 1000 && k24 < 100000) || !(k21 > 1000 && k21 < 100000)) return null;
-  var ratio = k21 / k24;
-  if (ratio < 0.86 || ratio > 0.89) return null;
-  if (d.ageSec != null && d.ageSec > LOCAL_MAX_AGE_SEC) return null;
-  return { k24: k24, k21: k21, usdBank: Number(d.usdBank) || null, asOf: d.asOf, confidence: d.confidence || 'medium' };
+  return d;
 }
 
 function renderSourceNote() {
   var el = document.getElementById('goldSrc');
   if (!el) return;
   if (priceSrc === 'local') {
-    var when = '', old = false;
+    var when = '';
     if (priceAsOf) {
       var d = new Date(priceAsOf);
       when = d.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' });
-      old = (Date.now() - d.getTime()) > 30*60*1000;
     }
-    el.className = 'src-note' + (old ? ' warn' : '');
-    el.textContent = t(priceConf === 'high' ? 'src_local' : 'src_local_medium') + (when ? ' — ' + t('last_update') + ' ' + when : '');
+    el.className = 'src-note';
+    el.textContent = t('src_local') + (when ? ' — ' + t('last_update') + ' ' + when : '');
   } else if (priceSrc === 'calc') {
     el.className = 'src-note warn';
     el.textContent = t('src_calc');
@@ -797,33 +792,6 @@ function fetchJsonWithTimeout(url, ms) {
   return fetch(url, controller ? { signal: controller.signal } : {})
     .then(function(r){ if (id) clearTimeout(id); return r.ok ? r.json() : null; })
     .catch(function(){ if (id) clearTimeout(id); return null; });
-}
-
-async function fetchCurrencyRates() {
-  var d = await fetchJsonWithTimeout('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json', 6000);
-  if (d && d.usd && d.usd.egp) {
-    return { USD: d.usd.egp, EUR: d.usd.egp/d.usd.eur, SAR: d.usd.egp/d.usd.sar };
-  }
-  var d2 = await fetchJsonWithTimeout('https://open.er-api.com/v6/latest/USD', 6000);
-  if (d2 && d2.rates && d2.rates.EGP) {
-    return { USD: d2.rates.EGP, EUR: d2.rates.EGP/d2.rates.EUR, SAR: d2.rates.EGP/d2.rates.SAR };
-  }
-  return null;
-}
-
-async function fetchGoldSpotUSD() {
-  var d = await fetchJsonWithTimeout('https://api.gold-api.com/price/XAU', 6000);
-  if (d && d.price) return { oz: parseFloat(d.price) };
-
-  var d2 = await fetchJsonWithTimeout('https://data-asg.goldprice.org/dbXRates/USD', 6000);
-  if (d2 && d2.items && d2.items[0] && d2.items[0].xauPrice) return { oz: parseFloat(d2.items[0].xauPrice) };
-
-  var d3 = await fetchJsonWithTimeout('https://api.metals.live/v1/spot/gold', 6000);
-  if (d3) {
-    var oz = Array.isArray(d3) ? (d3[0] && d3[0].gold) : d3.price;
-    if (oz) return { oz: parseFloat(oz) };
-  }
-  return null;
 }
 
 function updateRatesUI() {
@@ -915,7 +883,7 @@ window.resetNisabStart = async function() {
 function calcTotals() {
   if (!assets) return null;
   var gEGP = (assets.g24||0)*(gold.g24||0)+(assets.g21||0)*(gold.g21||0);
-  var cEGP = (assets.sar||0)*(rates.SAR||13.5)+(assets.usd||0)*(rates.USD||50.5)+(assets.eur||0)*(rates.EUR||55.8)+(assets.egp||0);
+  var cEGP = (assets.sar||0)*(rates.SAR||14.16)+(assets.usd||0)*(rates.USD||53.17)+(assets.eur||0)*(rates.EUR||59.61)+(assets.egp||0);
   return { gEGP:gEGP, cEGP:cEGP, total:gEGP+cEGP };
 }
 
