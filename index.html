@@ -155,6 +155,15 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
   .auth-card { max-width: 380px; }
 }
 @media (min-width: 1300px) { body { max-width: 1320px; } }
+
+.range-btn { background:rgba(184,155,94,0.08); border:1px solid var(--border); color:var(--text-muted); padding:3px 9px; border-radius:20px; font-size:10px; cursor:pointer; font-family:inherit; transition:all .15s; }
+.range-btn.active { background:rgba(184,155,94,0.22); border-color:var(--gold); color:var(--gold-light); font-weight:600; }
+.chart-stat { background:linear-gradient(160deg,#1F2933,#141B23); border:1px solid var(--border); border-radius:var(--radius-sm); padding:6px 8px; text-align:center; }
+.chart-stat-lbl { font-size:9px; color:var(--text-hint); margin-bottom:3px; }
+.chart-stat-val { font-size:13px; font-weight:700; font-family:Arial,sans-serif; }
+.chart-stat-val.up   { color:#8BC87A; }
+.chart-stat-val.down { color:var(--red); }
+.chart-stat-val.neu  { color:var(--gold-light); }
 </style>
 </head>
 <body>
@@ -288,6 +297,21 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
       <div class="card-title"><span class="dot"></span> <span data-i18n="card_calc_zakat">حساب الزكاة</span></div>
       <div id="zakatContent"><div class="stxt" style="padding:1rem 0" data-i18n="save_first">احفظ بياناتك أولاً</div></div>
     </div>
+    <div class="card" id="chartCard">
+      <div class="card-title" style="justify-content:space-between;flex-wrap:wrap;gap:6px">
+        <span style="display:flex;align-items:center;gap:6px"><span class="dot"></span> <span data-i18n="card_history">تاريخ ثروتك</span></span>
+        <div style="display:flex;gap:4px" id="chartRangeBtns">
+          <button class="range-btn active" onclick="setChartRange('7')"  data-i18n="range_7d">7 أيام</button>
+          <button class="range-btn"        onclick="setChartRange('30')" data-i18n="range_30d">30 يوم</button>
+          <button class="range-btn"        onclick="setChartRange('all')" data-i18n="range_all">الكل</button>
+        </div>
+      </div>
+      <div style="position:relative;height:190px">
+        <canvas id="wealthChart"></canvas>
+      </div>
+      <div id="chartStats" style="display:none;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px"></div>
+      <div class="stxt" id="chartMsg" style="margin-top:8px" data-i18n="chart_no_data">احفظ بياناتك أكثر من مرة لترى الرسم البياني</div>
+    </div>
     <div class="card">
       <div class="card-title"><span class="dot"></span> <span data-i18n="card_info">معلومات</span></div>
       <div style="font-size:12px;color:var(--text-muted);line-height:1.8">
@@ -303,6 +327,7 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -441,7 +466,19 @@ var I18N = {
   progress_label:      { ar:'تقدمك نحو النصاب', en:'Your progress toward Nisab' },
   current_nisab_value: { ar:'قيمة النصاب الحالية:', en:'Current Nisab value:' },
   ce_suffix:           { ar:' م', en:' CE' },
-  ah_suffix:           { ar:' هـ', en:' AH' }
+  ah_suffix:           { ar:' هـ', en:' AH' },
+
+  card_history:   { ar:'تاريخ ثروتك', en:'Wealth History' },
+  range_7d:       { ar:'7 أيام', en:'7 days' },
+  range_30d:      { ar:'30 يوم', en:'30 days' },
+  range_all:      { ar:'الكل', en:'All' },
+  chart_no_data:  { ar:'احفظ بياناتك أكثر من مرة لترى الرسم البياني', en:'Save your data more than once to see the chart' },
+  chart_now:      { ar:'الآن', en:'Now' },
+  chart_prev:     { ar:'السابق', en:'Prev' },
+  chart_change:   { ar:'التغيير', en:'Change' },
+  event_deposit:  { ar:'ضخ أموال 💰', en:'Deposit 💰' },
+  event_withdraw: { ar:'سحب 📉', en:'Withdrawal 📉' },
+  event_normal:   { ar:'تحديث', en:'Update' }
 };
 
 var currentLang = (function() {
@@ -554,6 +591,7 @@ window.guestMode = function() {
   showApp();
   loadLocal();
   if (assets) { fillInputs(); updateSummary(); updateZakat(); }
+  loadSnapshots();
   fetchRates();
 };
 
@@ -638,6 +676,7 @@ async function loadCloud() {
     setSaveSt(t('load_error') + (e.code||e.message), 0);
   }
   setSyncing(false);
+  loadSnapshots();
 }
 
 async function saveCloud() {
@@ -821,6 +860,7 @@ window.saveAssets = async function() {
     savedAt: new Date().toISOString()
   };
   checkNisab();
+  var t2snap = calcTotals();
   if (curUser) {
     await saveCloud();
     setSaveSt(t('saved_cloud'), 3000);
@@ -828,6 +868,7 @@ window.saveAssets = async function() {
     saveLocal();
     setSaveSt(t('saved_local'), 3000);
   }
+  await saveSnapshot(t2snap ? t2snap.total : 0);
   updateSummary(); updateZakat();
   btn.disabled=false; btn.textContent=t('btn_save');
 };
@@ -969,6 +1010,235 @@ window.showTab = function(name,el) {
   document.getElementById('tab-'+name).classList.add('active');
   el.classList.add('active');
 };
+
+// ===== WEALTH HISTORY / SNAPSHOTS =====
+
+var snapshots = [];
+var wealthChart = null;
+var chartRange = '7';
+var SNAP_MAX = 200; // max snapshots to store per user
+
+// Save a snapshot whenever user saves assets
+async function saveSnapshot(totalEGP) {
+  var snap = {
+    ts: Date.now(),
+    total: Math.round(totalEGP),
+    g24val: Math.round((assets.g24||0)*(gold.g24||0)),
+    cashval: Math.round(calcTotals().cEGP)
+  };
+
+  // determine event type vs last snapshot
+  if (snapshots.length > 0) {
+    var prev = snapshots[snapshots.length - 1].total;
+    var pct  = prev > 0 ? (snap.total - prev) / prev * 100 : 0;
+    if      (pct >=  5) snap.event = 'deposit';
+    else if (pct <= -5) snap.event = 'withdraw';
+    else                snap.event = 'normal';
+  } else {
+    snap.event = 'normal';
+  }
+
+  if (curUser) {
+    try {
+      await db.collection('users').doc(curUser.uid)
+              .collection('snapshots').add(snap);
+    } catch(e) {
+      console.warn('snapshot save error', e);
+    }
+  } else {
+    // guest: store in localStorage, keep last 60
+    snapshots.push(snap);
+    if (snapshots.length > 60) snapshots = snapshots.slice(-60);
+    try { localStorage.setItem('zakat_snaps', JSON.stringify(snapshots)); } catch(e) {}
+  }
+
+  snapshots.push(snap);
+  renderChart();
+}
+
+// Load snapshots from Firestore or localStorage
+async function loadSnapshots() {
+  snapshots = [];
+  if (curUser) {
+    try {
+      var col = await db.collection('users').doc(curUser.uid)
+                        .collection('snapshots')
+                        .orderBy('ts', 'asc')
+                        .limitToLast(SNAP_MAX)
+                        .get();
+      col.forEach(function(doc) { snapshots.push(doc.data()); });
+    } catch(e) {
+      console.warn('snapshots load error', e.code || e.message);
+    }
+  } else {
+    try {
+      var raw = localStorage.getItem('zakat_snaps');
+      if (raw) snapshots = JSON.parse(raw);
+    } catch(e) {}
+  }
+  renderChart();
+}
+
+window.setChartRange = function(r) {
+  chartRange = r;
+  document.querySelectorAll('.range-btn').forEach(function(b) {
+    b.classList.remove('active');
+  });
+  event.target.classList.add('active');
+  renderChart();
+};
+
+function getFilteredSnaps() {
+  if (!snapshots.length) return [];
+  if (chartRange === 'all') return snapshots;
+  var days = parseInt(chartRange);
+  var cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+  var filtered = snapshots.filter(function(s) { return s.ts >= cutoff; });
+  // always include at least one point before cutoff for context
+  if (filtered.length === 0) return snapshots.slice(-1);
+  if (filtered.length < snapshots.length) {
+    var idx = snapshots.indexOf(filtered[0]);
+    if (idx > 0) filtered = [snapshots[idx-1]].concat(filtered);
+  }
+  return filtered;
+}
+
+function renderChart() {
+  var canvas = document.getElementById('wealthChart');
+  var msgEl  = document.getElementById('chartMsg');
+  var statsEl = document.getElementById('chartStats');
+  if (!canvas) return;
+
+  var data = getFilteredSnaps();
+
+  if (data.length < 2) {
+    if (msgEl) { msgEl.style.display='block'; msgEl.textContent = t('chart_no_data'); }
+    if (statsEl) statsEl.style.display = 'none';
+    if (wealthChart) { wealthChart.destroy(); wealthChart = null; }
+    return;
+  }
+
+  if (msgEl) msgEl.style.display = 'none';
+
+  // Build labels and point data
+  var labels = data.map(function(s) {
+    var d = new Date(s.ts);
+    return d.toLocaleDateString(locale(), { month:'short', day:'numeric' })
+           + ' ' + d.toLocaleTimeString(locale(), { hour:'2-digit', minute:'2-digit' });
+  });
+  var values = data.map(function(s) { return s.total; });
+
+  // Colors per point for event markers
+  var pointColors = data.map(function(s) {
+    if (s.event === 'deposit')  return '#8BC87A';
+    if (s.event === 'withdraw') return '#D9917F';
+    return '#B89B5E';
+  });
+  var pointRadius = data.map(function(s) {
+    return (s.event === 'deposit' || s.event === 'withdraw') ? 6 : 3;
+  });
+
+  // Destroy previous chart
+  if (wealthChart) { wealthChart.destroy(); wealthChart = null; }
+
+  var ctx = canvas.getContext('2d');
+
+  // Gradient fill
+  var grad = ctx.createLinearGradient(0, 0, 0, 180);
+  grad.addColorStop(0,   'rgba(184,155,94,0.35)');
+  grad.addColorStop(1,   'rgba(184,155,94,0.02)');
+
+  wealthChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: values,
+        borderColor: '#B89B5E',
+        borderWidth: 2,
+        backgroundColor: grad,
+        pointBackgroundColor: pointColors,
+        pointBorderColor: pointColors,
+        pointRadius: pointRadius,
+        pointHoverRadius: 7,
+        fill: true,
+        tension: 0.35
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 400 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          rtl: currentLang === 'ar',
+          callbacks: {
+            title: function(items) { return labels[items[0].dataIndex]; },
+            label: function(item) {
+              var s = data[item.dataIndex];
+              var val = item.raw.toLocaleString(locale()) + ' ' + t('currency_egp');
+              var ev = s.event === 'deposit'  ? t('event_deposit')
+                     : s.event === 'withdraw' ? t('event_withdraw')
+                     : '';
+              return ev ? [val, ev] : val;
+            },
+            afterLabel: function(item) {
+              var s = data[item.dataIndex];
+              if (item.dataIndex > 0) {
+                var diff = s.total - data[item.dataIndex-1].total;
+                var sign = diff >= 0 ? '+' : '';
+                return sign + diff.toLocaleString(locale()) + ' ' + t('currency_egp');
+              }
+              return '';
+            }
+          },
+          backgroundColor: '#1A222C',
+          borderColor: 'rgba(184,155,94,0.4)',
+          borderWidth: 1,
+          titleColor: '#E3CF9F',
+          bodyColor: '#A9A38F',
+          padding: 10
+        }
+      },
+      scales: {
+        x: {
+          display: false
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: {
+            color: '#8A8672',
+            font: { size: 10, family: 'Arial' },
+            maxTicksLimit: 4,
+            callback: function(v) {
+              if (v >= 1000000) return (v/1000000).toFixed(1)+'M';
+              if (v >= 1000)    return (v/1000).toFixed(0)+'K';
+              return v;
+            }
+          },
+          border: { display: false }
+        }
+      }
+    }
+  });
+
+  // Stats row
+  var first = data[0];
+  var last  = data[data.length-1];
+  var diff  = last.total - first.total;
+  var pct2  = first.total > 0 ? (diff/first.total*100).toFixed(1) : '0';
+  var sign  = diff >= 0 ? '+' : '';
+  var cls   = diff > 0 ? 'up' : diff < 0 ? 'down' : 'neu';
+
+  statsEl.innerHTML =
+    '<div class="chart-stat"><div class="chart-stat-lbl">'+t('chart_now')+'</div><div class="chart-stat-val neu">'+last.total.toLocaleString(locale())+'</div></div>'
+   +'<div class="chart-stat"><div class="chart-stat-lbl">'+t('chart_prev')+'</div><div class="chart-stat-val neu">'+first.total.toLocaleString(locale())+'</div></div>'
+   +'<div class="chart-stat"><div class="chart-stat-lbl">'+t('chart_change')+'</div><div class="chart-stat-val '+cls+'">'+sign+diff.toLocaleString(locale())+' ('+sign+pct2+'%)</div></div>';
+  statsEl.style.display = 'grid';
+}
+
+// ===== END WEALTH HISTORY =====
 
 applyStaticI18n();
 
