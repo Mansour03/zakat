@@ -1291,17 +1291,17 @@ function renderChart() {
     }
   });
 
-  // Stats row
-  var first = data[0];
-  var last  = data[data.length-1];
-  var diff  = last.total - first.total;
-  var pct2  = first.total > 0 ? (diff/first.total*100).toFixed(1) : '0';
+  // Stats row — الآن vs النقطة اللي قبلها مباشرة
+  var last  = data[data.length - 1];
+  var prev  = data[data.length - 2];  // النقطة السابقة مباشرة
+  var diff  = last.total - prev.total;
+  var pct2  = prev.total > 0 ? (diff / prev.total * 100).toFixed(1) : '0';
   var sign  = diff >= 0 ? '+' : '';
   var cls   = diff > 0 ? 'up' : diff < 0 ? 'down' : 'neu';
 
   statsEl.innerHTML =
     '<div class="chart-stat"><div class="chart-stat-lbl">'+t('chart_now')+'</div><div class="chart-stat-val neu">'+last.total.toLocaleString(locale())+'</div></div>'
-   +'<div class="chart-stat"><div class="chart-stat-lbl">'+t('chart_prev')+'</div><div class="chart-stat-val neu">'+first.total.toLocaleString(locale())+'</div></div>'
+   +'<div class="chart-stat"><div class="chart-stat-lbl">'+t('chart_prev')+'</div><div class="chart-stat-val neu">'+prev.total.toLocaleString(locale())+'</div></div>'
    +'<div class="chart-stat"><div class="chart-stat-lbl">'+t('chart_change')+'</div><div class="chart-stat-val '+cls+'">'+sign+diff.toLocaleString(locale())+' ('+sign+pct2+'%)</div></div>';
   statsEl.style.display = 'grid';
 }
