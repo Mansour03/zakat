@@ -1098,6 +1098,9 @@ async function saveSnapshot(totalEGP) {
     snap.event = 'normal';
   }
 
+  // أضف للـ in-memory array مرة واحدة بس
+  snapshots.push(snap);
+
   if (curUser) {
     try {
       await db.collection('users').doc(curUser.uid)
@@ -1106,13 +1109,11 @@ async function saveSnapshot(totalEGP) {
       console.warn('snapshot save error', e);
     }
   } else {
-    // guest: store in localStorage, keep last 60
-    snapshots.push(snap);
+    // guest: sync localStorage
     if (snapshots.length > 60) snapshots = snapshots.slice(-60);
     try { localStorage.setItem('zakat_snaps', JSON.stringify(snapshots)); } catch(e) {}
   }
 
-  snapshots.push(snap);
   renderChart();
 }
 
@@ -1275,14 +1276,16 @@ function renderChart() {
           ticks: {
             color: '#8A8672',
             font: { size: 10, family: 'Arial' },
-            maxTicksLimit: 4,
+            maxTicksLimit: 5,
             callback: function(v) {
-              if (v >= 1000000) return (v/1000000).toFixed(1)+'M';
+              if (v >= 1000000) return (v/1000000).toFixed(2)+'M';
               if (v >= 1000)    return (v/1000).toFixed(0)+'K';
               return v;
             }
           },
-          border: { display: false }
+          border: { display: false },
+          // padding بسيط فوق وتحت عشان النقاط ماتتقطعش
+          grace: '5%'
         }
       }
     }
