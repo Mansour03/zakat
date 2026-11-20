@@ -478,7 +478,8 @@ var I18N = {
   chart_change:   { ar:'التغيير', en:'Change' },
   event_deposit:  { ar:'ضخ أموال 💰', en:'Deposit 💰' },
   event_withdraw: { ar:'سحب 📉', en:'Withdrawal 📉' },
-  event_normal:   { ar:'تحديث', en:'Update' }
+  event_normal:   { ar:'حفظ يدوي 💾', en:'Manual save 💾' },
+  event_price:    { ar:'تحديث سعر 🔄', en:'Price update 🔄' }
 };
 
 var currentLang = (function() {
@@ -783,10 +784,65 @@ window.fetchRates = async function(forceRefresh) {
 
   setPriceWarning(usedStale, cache ? cache.ts : null);
 
-  if (assets) { updateSummary(); updateZakat(); }
+  if (assets) {
+    updateSummary(); updateZakat();
+    if (!usedStale) {
+      // تسجيل snapshot تلقائي لو السعر اتغير وغيّر الإجمالي
+      var t2auto = calcTotals();
+      if (t2auto) {
+        var newTotal = Math.round(t2auto.total);
+        var lastTotal = snapshots.length > 0 ? snapshots[snapshots.length-1].total : null;
+        // سجّل لو مفيش snapshots أو لو الفرق > 0.1% من الإجمالي
+        var threshold = lastTotal ? Math.abs(newTotal - lastTotal) / lastTotal : 1;
+        if (lastTotal === null || threshold >= 0.001) {
+          recordPriceSnapshot(newTotal);
+        }
+      }
+    }
+  }
   document.getElementById('lastUpd').textContent = t('last_update')+' '+new Date().toLocaleTimeString(locale());
   if (!usedStale) saveRatesCache();
 };
+
+// snapshot تلقائي من تغيير الأسعار (بدون حفظ Firestore كثير — نحفظ locally دايماً وFirestore كل 30 دقيقة بس)
+var lastPriceSnapTs = 0;
+var PRICE_SNAP_MIN_INTERVAL = 30 * 60 * 1000; // 30 دقيقة بين كل Firestore write
+
+async function recordPriceSnapshot(newTotal) {
+  var now = Date.now();
+  var snap = {
+    ts: now,
+    total: newTotal,
+    g24val: Math.round((assets.g24||0)*(gold.g24||0)),
+    cashval: Math.round(calcTotals().cEGP),
+    event: 'price'
+  };
+
+  // دايماً حدّث الـ in-memory array والشارت
+  snapshots.push(snap);
+  renderChart();
+
+  // Firestore: كتابة كل 30 دقيقة بس (عشان محدش يملأ quota)
+  if (curUser && (now - lastPriceSnapTs) >= PRICE_SNAP_MIN_INTERVAL) {
+    lastPriceSnapTs = now;
+    try {
+      await db.collection('users').doc(curUser.uid)
+              .collection('snapshots').add(snap);
+    } catch(e) {
+      console.warn('price snapshot error', e);
+    }
+  } else if (!curUser) {
+    // guest: تحديث localStorage
+    if (snapshots.length > 60) snapshots = snapshots.slice(-60);
+    try { localStorage.setItem('zakat_snaps', JSON.stringify(snapshots)); } catch(e) {}
+  }
+}
+
+// Auto-refresh الأسعار كل ساعة
+setTimeout(function autoRefreshLoop() {
+  fetchRates(true);
+  setTimeout(autoRefreshLoop, 60 * 60 * 1000); // كل ساعة
+}, 60 * 60 * 1000);
 
 function setPriceWarning(stale, lastGoodTs) {
   var el = document.getElementById('priceWarning');
@@ -1132,10 +1188,13 @@ function renderChart() {
   var pointColors = data.map(function(s) {
     if (s.event === 'deposit')  return '#8BC87A';
     if (s.event === 'withdraw') return '#D9917F';
+    if (s.event === 'price')    return '#7FA6C9';
     return '#B89B5E';
   });
   var pointRadius = data.map(function(s) {
-    return (s.event === 'deposit' || s.event === 'withdraw') ? 6 : 3;
+    if (s.event === 'deposit' || s.event === 'withdraw') return 6;
+    if (s.event === 'price') return 3;
+    return 4;
   });
 
   // Destroy previous chart
@@ -1180,6 +1239,7 @@ function renderChart() {
               var val = item.raw.toLocaleString(locale()) + ' ' + t('currency_egp');
               var ev = s.event === 'deposit'  ? t('event_deposit')
                      : s.event === 'withdraw' ? t('event_withdraw')
+                     : s.event === 'price'    ? t('event_price')
                      : '';
               return ev ? [val, ev] : val;
             },
