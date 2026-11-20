@@ -1065,6 +1065,10 @@ window.showTab = function(name,el) {
   document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
   document.getElementById('tab-'+name).classList.add('active');
   el.classList.add('active');
+  // الشارت محتاج re-render لو التاب كان مخفي (canvas height=0)
+  if (name === 'prices') {
+    requestAnimationFrame(function() { renderChart(); });
+  }
 };
 
 // ===== WEALTH HISTORY / SNAPSHOTS =====
@@ -1132,7 +1136,8 @@ async function loadSnapshots() {
       if (raw) snapshots = JSON.parse(raw);
     } catch(e) {}
   }
-  renderChart();
+  // render بعد frame عشان لو التاب مش visible ميرسمش على canvas بـ height=0
+  requestAnimationFrame(function() { renderChart(); });
 }
 
 window.setChartRange = function(r) {
