@@ -476,10 +476,10 @@ var I18N = {
   chart_now:      { ar:'الآن', en:'Now' },
   chart_prev:     { ar:'السابق', en:'Prev' },
   chart_change:   { ar:'التغيير', en:'Change' },
-  event_deposit:  { ar:'ضخ أموال 💰', en:'Deposit 💰' },
-  event_withdraw: { ar:'سحب 📉', en:'Withdrawal 📉' },
-  event_normal:   { ar:'حفظ يدوي 💾', en:'Manual save 💾' },
-  event_price:    { ar:'تحديث سعر 🔄', en:'Price update 🔄' }
+  event_deposit:  { ar:'💰 أضفت أصول', en:'💰 Assets added' },
+  event_withdraw: { ar:'📤 سحبت أصول', en:'📤 Assets withdrawn' },
+  event_normal:   { ar:'💾 حفظ (بدون تغيير الأصول)', en:'💾 Saved (no asset change)' },
+  event_price:    { ar:'🔄 تغيير سعر', en:'🔄 Price change' }
 };
 
 var currentLang = (function() {
@@ -1078,22 +1078,38 @@ var wealthChart = null;
 var chartRange = '7';
 var SNAP_MAX = 200; // max snapshots to store per user
 
+// حساب "وزن الأصول الخام" بأسعار مرجعية ثابتة
+// عشان نعرف لو الواحد ضخ أو سحب بغض النظر عن تغيير الأسعار
+function rawAssetsValue(a) {
+  // نستخدم أسعار مرجعية ثابتة (1 USD = 50 EGP، 1 SAR = 13.3، 1 EUR = 55، 24K = 6000 EGP/g)
+  // الهدف مقارنة الأصول الخام فقط، مش التأثر بتذبذب السعر
+  var REF = { g24: 6000, g21: 5250, usd: 50, eur: 55, sar: 13.3, egp: 1 };
+  return (a.g24||0)*REF.g24 + (a.g21||0)*REF.g21
+       + (a.usd||0)*REF.usd + (a.eur||0)*REF.eur
+       + (a.sar||0)*REF.sar + (a.egp||0)*REF.egp;
+}
+
 // Save a snapshot whenever user saves assets
 async function saveSnapshot(totalEGP) {
   var snap = {
     ts: Date.now(),
     total: Math.round(totalEGP),
     g24val: Math.round((assets.g24||0)*(gold.g24||0)),
-    cashval: Math.round(calcTotals().cEGP)
+    cashval: Math.round(calcTotals().cEGP),
+    // حفظ الأصول الخام عشان نقدر نحدد سبب التغيير
+    raw: rawAssetsValue(assets)
   };
 
-  // determine event type vs last snapshot
+  // تحديد نوع الحدث بناءً على تغيير الأصول الخام (مش الإجمالي)
+  // لو raw اتغير = أنت ضخيت أو سحبت
+  // لو raw ثابت والإجمالي اتغير = السعر هو السبب
   if (snapshots.length > 0) {
-    var prev = snapshots[snapshots.length - 1].total;
-    var pct  = prev > 0 ? (snap.total - prev) / prev * 100 : 0;
-    if      (pct >=  5) snap.event = 'deposit';
-    else if (pct <= -5) snap.event = 'withdraw';
-    else                snap.event = 'normal';
+    var lastSnap = snapshots[snapshots.length - 1];
+    var prevRaw  = lastSnap.raw || 0;
+    var rawDiff  = prevRaw > 0 ? (snap.raw - prevRaw) / prevRaw * 100 : 0;
+    if      (rawDiff >=  0.5) snap.event = 'deposit';   // زاد الأصول > 0.5%
+    else if (rawDiff <= -0.5) snap.event = 'withdraw';  // قلّل الأصول > 0.5%
+    else                      snap.event = 'normal';    // تغيير سعر بس
   } else {
     snap.event = 'normal';
   }
@@ -1299,10 +1315,18 @@ function renderChart() {
   var sign  = diff >= 0 ? '+' : '';
   var cls   = diff > 0 ? 'up' : diff < 0 ? 'down' : 'neu';
 
+  // سبب آخر تغيير
+  var lastEvent = last.event || 'normal';
+  var reasonIcon = lastEvent === 'deposit'  ? '💰'
+                 : lastEvent === 'withdraw' ? '📤'
+                 : lastEvent === 'price'    ? '🔄'
+                 : '💾';
+
   statsEl.innerHTML =
-    '<div class="chart-stat"><div class="chart-stat-lbl">'+t('chart_now')+'</div><div class="chart-stat-val neu">'+last.total.toLocaleString(locale())+'</div></div>'
-   +'<div class="chart-stat"><div class="chart-stat-lbl">'+t('chart_prev')+'</div><div class="chart-stat-val neu">'+prev.total.toLocaleString(locale())+'</div></div>'
-   +'<div class="chart-stat"><div class="chart-stat-lbl">'+t('chart_change')+'</div><div class="chart-stat-val '+cls+'">'+sign+diff.toLocaleString(locale())+' ('+sign+pct2+'%)</div></div>';
+    '<div class="chart-stat"><div class="chart-stat-lbl">'+t('chart_now')+'</div><div class="chart-stat-val neu" style="font-size:12px">'+last.total.toLocaleString(locale())+'</div></div>'
+   +'<div class="chart-stat"><div class="chart-stat-lbl">'+t('chart_prev')+'</div><div class="chart-stat-val neu" style="font-size:12px">'+prev.total.toLocaleString(locale())+'</div></div>'
+   +'<div class="chart-stat" style="grid-column:1/-1"><div class="chart-stat-lbl">'+t('chart_change')+'</div>'
+   +'<div class="chart-stat-val '+cls+'" style="font-size:14px">'+reasonIcon+' '+sign+diff.toLocaleString(locale())+' جنيه ('+sign+pct2+'%)</div></div>';
   statsEl.style.display = 'grid';
 }
 
