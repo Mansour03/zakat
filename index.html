@@ -4,166 +4,467 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Money</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* ===== VAULT THEME — calm steel + brass ===== */
-* { box-sizing: border-box; margin: 0; padding: 0; }
+/* ===== PRIVATE VAULT THEME — Obsidian + Brushed Champagne Gold ===== */
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 :root {
-  --gold: #B89B5E; --gold-light: #E3CF9F; --gold-dark: #CDB67E;
-  --gold-bg: #11171E; --gold-bg2: #1A222C; --card-bg: #202A35;
-  --border: rgba(184,155,94,0.22); --border-strong: rgba(184,155,94,0.45);
-  --text: #E8E2D0; --text-muted: #A9A38F; --text-hint: #8A8672;
-  --red: #D9917F; --red-bg: rgba(217,145,127,0.09);
-  --green: #E3CF9F; --green-bg: rgba(227,207,159,0.08);
-  --steel-hi: #2D3A48; --steel-lo: #161D25;
-  --radius: 14px; --radius-sm: 8px;
+  --gold: #C9A55A;
+  --gold-light: #EAD196;
+  --gold-dark: #9D7D3B;
+  --bg-deep: #090C11;
+  --bg-surface: #11161F;
+  --card-top: rgba(27, 33, 45, 0.94);
+  --card-bot: rgba(15, 19, 27, 0.97);
+  --border: rgba(234, 209, 150, 0.13);
+  --border-strong: rgba(234, 209, 150, 0.30);
+  --text: #F2EDE2;
+  --text-muted: #A6A092;
+  --text-hint: #757065;
+  --red: #EB8E84;
+  --red-bg: rgba(235, 142, 132, 0.08);
+  --green: #EAD196;
+  --green-bg: rgba(234, 209, 150, 0.08);
+  --emerald: #7EE092;
+  --radius: 18px;
+  --radius-sm: 11px;
+  --shadow-card: 0 18px 40px -14px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
-body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); min-height: 100vh; max-width: 440px; margin: 0 auto; padding-bottom: 2rem;
-  background: radial-gradient(ellipse at top, #1B2430 0%, #11171E 65%) fixed; color-scheme: dark; }
 
-.loading-logo, .auth-logo { width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center; font-size: 34px; color: var(--gold-light);
+html, body { height: 100%; }
+body {
+  font-family: 'Cairo', 'Inter', 'Segoe UI', Tahoma, Arial, sans-serif;
+  color: var(--text);
+  height: 100dvh;
+  width: 100%;
+  margin: 0 auto;
+  overflow: hidden;
+  color-scheme: dark;
   background:
-    radial-gradient(circle, #1A222C 0 36%, transparent 37%),
-    conic-gradient(#46535F, #2B3540, #46535F, #2B3540, #46535F, #2B3540, #46535F, #2B3540, #46535F);
-  border: 4px solid #8A7544;
-  box-shadow: 0 0 0 6px #161D25, 0 0 0 8px #5D4F2D, 0 14px 30px rgba(0,0,0,.55); }
-.loading-logo { margin-bottom: 22px; animation: pulse 1.8s ease-in-out infinite; }
+    radial-gradient(ellipse 85% 45% at 50% -8%, rgba(201, 165, 90, 0.14) 0%, transparent 62%),
+    radial-gradient(circle at 12% 90%, rgba(45, 65, 95, 0.16) 0%, transparent 45%),
+    #090C11;
+}
+
+/* Emblem / Medallion */
+.loading-logo, .auth-logo {
+  width: 88px; height: 88px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 32px; color: var(--gold-light);
+  background:
+    radial-gradient(circle at 35% 30%, rgba(234, 209, 150, 0.16), transparent 60%),
+    linear-gradient(155deg, #1E2532, #0E1219);
+  border: 1.5px solid rgba(234, 209, 150, 0.55);
+  box-shadow:
+    0 0 0 7px rgba(201, 165, 90, 0.07),
+    0 0 0 14px rgba(201, 165, 90, 0.03),
+    0 18px 36px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.loading-logo { margin-bottom: 22px; animation: pulse 1.9s ease-in-out infinite; }
 .auth-logo { margin-bottom: 18px; }
-@keyframes pulse { 0%,100%{opacity:.55} 50%{opacity:1} }
+@keyframes pulse { 0%,100%{ transform:scale(0.97); opacity:.65 } 50%{ transform:scale(1.02); opacity:1 } }
 
-.loading-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; background:radial-gradient(ellipse at top,#1B2430,#0D1218 70%); }
-.auth-wrap { display:none; position:relative; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:2rem 1.5rem; background:radial-gradient(ellipse at top,#1B2430,#0D1218 70%); }
-.auth-title { font-size:28px; font-weight:700; color:var(--gold-light); letter-spacing:3px; margin-bottom:4px; }
-.auth-sub { font-size:13px; color:var(--text-hint); margin-bottom:2rem; }
-.lang-toggle-auth { position:absolute; top:16px; inset-inline-end:16px; }
-.lang-btn { background:rgba(184,155,94,0.12); border:1px solid var(--border-strong); color:var(--gold-light); padding:5px 12px; border-radius:20px; font-size:11px; font-weight:700; cursor:pointer; letter-spacing:1px; }
+/* Auth & Loading Screens */
+.loading-wrap {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  height:100dvh;
+}
+.auth-wrap {
+  display:none; position:relative; flex-direction:column; align-items:center; justify-content:center;
+  height:100dvh; padding:2rem 1.25rem; overflow-y:auto;
+}
+.auth-title {
+  font-size:28px; font-weight:800; letter-spacing:1.5px; margin-bottom:4px;
+  background: linear-gradient(180deg, #F8E7B8 0%, #C9A55A 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.auth-sub { font-size:13px; color:var(--text-muted); margin-bottom:1.75rem; }
+.lang-toggle-auth { position:absolute; top:18px; inset-inline-end:18px; }
 
-.auth-card, .card { position:relative; background:linear-gradient(160deg,var(--steel-hi),var(--card-bg) 45%,var(--steel-lo)); border:1px solid var(--border-strong); border-radius:var(--radius);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), inset 0 0 0 4px rgba(0,0,0,.18), 0 8px 22px rgba(0,0,0,.35); }
-.auth-card { padding:1.5rem; width:100%; max-width:340px; }
-.card { padding:1rem 1.1rem; margin-bottom:1rem; }
-.card::before, .card::after { content:""; position:absolute; top:8px; width:7px; height:7px; border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,#E3CF9F,#7A6330); box-shadow:0 1px 2px rgba(0,0,0,.7); }
-.card::before { inset-inline-start:9px; }
-.card::after  { inset-inline-end:9px; }
-.card-title { font-size:13px; font-weight:600; color:var(--gold-light); margin-bottom:.75rem; display:flex; align-items:center; gap:6px; padding:0 14px; }
-.dot { width:6px; height:6px; background:var(--gold); border-radius:50%; display:inline-block; }
+.lang-btn {
+  background: rgba(234, 209, 150, 0.08);
+  border: 1px solid var(--border-strong);
+  color: var(--gold-light);
+  padding: 6px 13px;
+  border-radius: 999px;
+  font-size: 11px; font-weight: 700;
+  cursor: pointer; letter-spacing: 0.8px;
+  font-family: 'Inter', sans-serif;
+  transition: all .18s ease;
+}
+.lang-btn:hover { background: rgba(234, 209, 150, 0.16); border-color: var(--gold-light); }
 
-.auth-tabs { display:flex; border-bottom:1px solid var(--border); margin-bottom:1.25rem; }
-.auth-tab { flex:1; padding:8px 0; text-align:center; font-size:13px; font-weight:500; color:var(--text-muted); cursor:pointer; border-bottom:2px solid transparent; }
-.auth-tab.active { color:var(--gold-light); border-bottom-color:var(--gold); }
-.auth-input, .input-group input { width:100%; border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; font-size:14px; background:#10161D; color:var(--text);
-  box-shadow: inset 0 2px 5px rgba(0,0,0,.55); }
-.auth-input { margin-bottom:10px; }
-.input-group input { padding:8px 10px; }
-.auth-input:focus, .input-group input:focus { outline:none; border-color:var(--gold); box-shadow: inset 0 2px 5px rgba(0,0,0,.55), 0 0 0 2px rgba(184,155,94,.2); }
-.auth-input::placeholder, .input-group input::placeholder { color:#5E6572; }
+/* Cards */
+.auth-card, .card {
+  position: relative;
+  background: linear-gradient(165deg, var(--card-top), var(--card-bot));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(12px);
+}
+.auth-card { padding: 1.65rem; width: 100%; max-width: 370px; }
+.card { padding: 1.05rem 1.15rem; margin-bottom: 0.9rem; transition: border-color .2s ease; }
+.card:hover { border-color: rgba(234, 209, 150, 0.24); }
+.card-title {
+  font-size: 14px; font-weight: 700; color: var(--gold-light);
+  margin-bottom: 0.9rem; display: flex; align-items: center; gap: 8px;
+  letter-spacing: 0.2px;
+}
+.dot {
+  width: 7px; height: 7px; border-radius: 50%; display: inline-block;
+  background: linear-gradient(135deg, #F6E2AE, #B58F43);
+  box-shadow: 0 0 8px rgba(234, 209, 150, 0.5);
+}
 
-.auth-btn, .save-btn { width:100%; background:linear-gradient(180deg,#D3BC84,#A98A4A 55%,#8A6F37); color:#1C1507; border:1px solid #6B5528; border-radius:var(--radius-sm);
-  padding:11px; font-size:14px; font-weight:700; cursor:pointer; box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 3px 8px rgba(0,0,0,.4); }
-.save-btn { margin-top:4px; }
+/* Auth Tabs & Inputs */
+.auth-tabs {
+  display: flex; gap: 6px; padding: 4px;
+  background: rgba(8, 10, 15, 0.75);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 1.25rem;
+}
+.auth-tab {
+  flex: 1; padding: 8px 0; text-align: center; font-size: 13px; font-weight: 600;
+  color: var(--text-muted); cursor: pointer; border-radius: 9px; transition: all .18s ease;
+}
+.auth-tab.active {
+  color: #161108;
+  background: linear-gradient(180deg, #EED59B, #C8A253);
+  box-shadow: 0 2px 10px rgba(201, 165, 90, 0.28);
+}
+
+.auth-input, .input-group input {
+  width: 100%;
+  border: 1px solid rgba(234, 209, 150, 0.14);
+  border-radius: var(--radius-sm);
+  padding: 11px 13px;
+  font-size: 14px;
+  font-family: inherit;
+  background: rgba(7, 9, 14, 0.85);
+  color: var(--text);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.45);
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.auth-input { margin-bottom: 11px; }
+.input-group input { padding: 10px 12px; font-weight: 600; }
+.auth-input:focus, .input-group input:focus {
+  outline: none;
+  border-color: var(--gold);
+  background: rgba(11, 15, 22, 0.95);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.45), 0 0 0 3px rgba(201, 165, 90, 0.16);
+}
+.auth-input::placeholder, .input-group input::placeholder { color: #545A66; }
+
+/* Primary Gold Buttons */
+.auth-btn, .save-btn {
+  width: 100%;
+  background: linear-gradient(180deg, #F0D99F 0%, #CFA95A 52%, #A9843B 100%);
+  color: #171106;
+  border: 1px solid rgba(246, 226, 174, 0.45);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-size: 14px; font-weight: 800; font-family: inherit;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 8px 20px -6px rgba(201, 165, 90, 0.45);
+  transition: transform .14s ease, box-shadow .18s ease, filter .18s ease;
+}
+.save-btn { margin-top: 6px; }
+.auth-btn:hover, .save-btn:hover { filter: brightness(1.05); transform: translateY(-1px); }
 .auth-btn:active, .save-btn:active { transform: translateY(1px); }
-.auth-btn:disabled, .save-btn:disabled { opacity:0.5; cursor:not-allowed; }
-.auth-err { font-size:12px; color:var(--red); text-align:center; margin-top:8px; min-height:18px; }
-.guest-btn { width:100%; background:transparent; border:1px dashed var(--border-strong); border-radius:var(--radius-sm); padding:9px; font-size:13px; color:var(--text-muted); cursor:pointer; margin-top:8px; }
+.auth-btn:disabled, .save-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.auth-err { font-size: 12px; color: var(--red); text-align: center; margin-top: 10px; min-height: 18px; }
+.guest-btn {
+  width: 100%; background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(234, 209, 150, 0.28);
+  border-radius: var(--radius-sm); padding: 10px; font-size: 13px; font-weight: 600;
+  color: var(--text-muted); cursor: pointer; margin-top: 8px; font-family: inherit;
+  transition: all .18s ease;
+}
+.guest-btn:hover { border-color: var(--gold); color: var(--gold-light); background: rgba(234, 209, 150, 0.05); }
 
-.app-wrap { display:none; }
-.header { background:linear-gradient(180deg,#2A3542,#18202A); padding:1.1rem 1.25rem 0.6rem; position:sticky; top:0; z-index:100; border-bottom:2px solid #6B5528; box-shadow:0 6px 18px rgba(0,0,0,.45); }
-.header-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.6rem; }
-.app-title { font-size:22px; font-weight:700; color:var(--gold-light); letter-spacing:2px; }
-.user-badge { font-size:10px; color:var(--text-hint); margin-top:2px; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.hdr-btns { display:flex; gap:6px; }
-.hdr-btn { background:rgba(184,155,94,0.12); border:1px solid var(--border-strong); color:var(--gold-light); padding:5px 10px; border-radius:var(--radius-sm); font-size:11px; cursor:pointer; }
-.prices-bar { display:flex; gap:8px; overflow-x:auto; padding-bottom:6px; scrollbar-width:none; }
-.prices-bar::-webkit-scrollbar { display:none; }
-.price-pill { background:rgba(0,0,0,.25); border:1px solid var(--border); border-radius:20px; padding:3px 10px; white-space:nowrap; font-size:11px; }
-.price-pill .lbl { color:var(--text-hint); }
-.price-pill .val { color:var(--gold-light); font-weight:600; }
+/* App Shell & Glass Header */
+.app-wrap {
+  display: none; flex-direction: column;
+  height: 100dvh; width: 100%; max-width: 540px; margin: 0 auto;
+  overflow: hidden;
+}
+.header {
+  background: linear-gradient(180deg, rgba(22, 28, 39, 0.94), rgba(14, 18, 26, 0.90));
+  backdrop-filter: blur(16px);
+  padding: 0.85rem 1.05rem 0.65rem;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(234, 209, 150, 0.18);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+.header-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 0.65rem; }
+.app-title {
+  font-size: 19px; font-weight: 800; color: var(--gold-light);
+  display: flex; align-items: center; gap: 7px; letter-spacing: 0.3px;
+}
+.user-badge {
+  font-size: 11px; color: var(--text-hint); margin-top: 2px;
+  max-width: 210px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.hdr-btns { display: flex; gap: 6px; align-items: center; }
+.hdr-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-strong);
+  color: var(--gold-light);
+  padding: 6px 11px; border-radius: 999px;
+  font-size: 11px; font-weight: 700; font-family: inherit;
+  cursor: pointer; transition: all .18s ease;
+}
+.hdr-btn:hover { background: rgba(234, 209, 150, 0.14); border-color: var(--gold-light); }
 
-.tabs { display:flex; background:var(--gold-bg2); border-bottom:1px solid var(--border); position:sticky; top:102px; z-index:99; }
-.tab { flex:1; padding:10px 0; text-align:center; font-size:13px; font-weight:500; color:var(--text-muted); cursor:pointer; border-bottom:2px solid transparent; }
-.tab.active { color:var(--gold-light); border-bottom-color:var(--gold); background:var(--gold-bg); }
+/* Live Market Ticker */
+.prices-bar {
+  display: flex; gap: 7px; overflow-x: auto; padding-bottom: 2px;
+  scrollbar-width: none;
+}
+.prices-bar::-webkit-scrollbar { display: none; }
+.price-pill {
+  background: rgba(8, 11, 16, 0.72);
+  border: 1px solid rgba(234, 209, 150, 0.15);
+  border-radius: 999px;
+  padding: 4px 11px;
+  white-space: nowrap; font-size: 11px;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.price-pill .lbl { color: var(--text-muted); font-weight: 600; }
+.price-pill .val { color: var(--gold-light); font-weight: 700; }
 
-.section { display:none; padding:1rem; }
-.section.active { display:block; }
+/* Segmented Mobile/Tablet Navigation Tabs */
+.tabs {
+  display: flex; gap: 6px;
+  background: rgba(12, 16, 23, 0.92);
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.tab {
+  flex: 1; padding: 8px 0; text-align: center;
+  font-size: 13px; font-weight: 600; color: var(--text-muted);
+  cursor: pointer; border-radius: 10px;
+  border: 1px solid transparent;
+  transition: all .18s ease;
+}
+.tab:hover { color: var(--text); }
+.tab.active {
+  color: var(--gold-light);
+  background: linear-gradient(180deg, rgba(234, 209, 150, 0.14), rgba(201, 165, 90, 0.06));
+  border-color: rgba(234, 209, 150, 0.34);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
+}
 
-.input-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
-.input-group { display:flex; flex-direction:column; gap:4px; }
-.input-group label { font-size:11px; color:var(--text-hint); font-weight:500; }
+/* Scrollable Main Area */
+.sections-wrap { flex: 1; min-height: 0; overflow: hidden; position: relative; }
+.section {
+  display: none; height: 100%; overflow-y: auto;
+  padding: 0.9rem 0.9rem 1.5rem;
+  scrollbar-width: thin; scrollbar-color: rgba(201, 165, 90, 0.25) transparent;
+}
+.section::-webkit-scrollbar { width: 5px; }
+.section::-webkit-scrollbar-thumb { background: rgba(201, 165, 90, 0.25); border-radius: 999px; }
+.section.active { display: block; }
 
-.summary-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
-.stat-box { background:linear-gradient(160deg,#1F2933,#141B23); border:1px solid var(--border); border-radius:var(--radius-sm); padding:.75rem; text-align:center; box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
-.stat-label { font-size:10px; color:var(--text-hint); margin-bottom:4px; font-weight:500; }
-.stat-val { font-size:18px; font-weight:700; color:var(--gold-light); direction:ltr; font-family: Arial, 'Segoe UI', sans-serif; }
-.stat-unit { font-size:10px; color:var(--text-muted); margin-top:2px; }
-.stat-box.hl { background:linear-gradient(180deg,#D3BC84,#A98A4A 60%,#8A6F37); border-color:#6B5528; }
-.stat-box.hl .stat-label { color:#3A2C0E; }
-.stat-box.hl .stat-val { color:#1C1507; font-size:22px; }
-.stat-box.hl .stat-unit { color:#3A2C0E; }
+.input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.input-group { display: flex; flex-direction: column; gap: 4px; }
+.input-group label { font-size: 11px; color: var(--text-muted); font-weight: 600; }
 
-.zakat-card { border-radius:var(--radius); padding:1.1rem; margin-bottom:1rem; }
-.zakat-card.yes { background:var(--green-bg); border:1px solid rgba(227,207,159,0.35); }
-.zakat-card.no  { background:var(--red-bg);   border:1px solid rgba(217,145,127,0.35); }
-.zbadge { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; margin-bottom:8px; }
-.by { background:rgba(227,207,159,0.14); color:var(--green); }
-.bn { background:rgba(217,145,127,0.14); color:var(--red); }
-.zt { font-size:15px; font-weight:700; margin-bottom:4px; }
-.zt.y { color:var(--green); } .zt.n { color:var(--red); }
-.zs { font-size:12px; color:var(--text-muted); line-height:1.5; margin-top:3px; }
-.zamtrow { display:flex; align-items:baseline; gap:6px; margin-top:10px; padding-top:10px; border-top:1px solid rgba(227,207,159,0.22); }
+/* Summary Stat Boxes */
+.summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 9px; }
+.stat-box {
+  background: linear-gradient(165deg, rgba(24, 31, 43, 0.85), rgba(13, 17, 24, 0.95));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 0.75rem;
+  text-align: center;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.stat-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; font-weight: 600; }
+.stat-val { font-size: 17px; font-weight: 700; color: var(--gold-light); direction: ltr; font-family: 'Inter', Arial, sans-serif; }
+.stat-unit { font-size: 10px; color: var(--text-hint); margin-top: 2px; }
 
-.bar-wrap { margin-top:10px; padding-top:10px; border-top:1px solid var(--border); }
-.bar-lbl { display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted); margin-bottom:5px; }
-.bar-track { background:#10161D; border-radius:10px; height:8px; overflow:hidden; border:1px solid var(--border); box-shadow: inset 0 1px 3px rgba(0,0,0,.6); }
-.bar-fill { height:100%; border-radius:10px; transition:width .5s ease; }
-.by2 { background:linear-gradient(90deg,#B89B5E,#E3CF9F); }
-.bn2 { background:linear-gradient(90deg,#B77562,#D9917F); }
+/* Hero Total Wealth Card */
+.stat-box.hl {
+  background:
+    radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.35), transparent 45%),
+    linear-gradient(135deg, #F1DA9F 0%, #CCA656 55%, #9B7834 100%);
+  border: 1px solid rgba(255, 240, 200, 0.55);
+  padding: 0.95rem 1rem;
+  box-shadow: 0 12px 26px -8px rgba(201, 165, 90, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+.stat-box.hl .stat-label { color: #3D2D0D; font-weight: 700; font-size: 12px; }
+.stat-box.hl .stat-val { color: #161004; font-size: 24px; font-weight: 800; letter-spacing: -0.3px; }
+.stat-box.hl .stat-unit { color: #3D2D0D; font-weight: 700; }
 
-.gold-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
-.gold-box { background:linear-gradient(160deg,#2A2A22,#1A1A15); border:1px solid var(--border-strong); border-radius:var(--radius-sm); padding:.75rem; text-align:center; }
-.karat { font-size:11px; color:var(--gold); font-weight:600; }
-.gprice { font-size:17px; font-weight:700; color:var(--gold-light); direction:ltr; font-family: Arial, 'Segoe UI', sans-serif; }
-.gunit { font-size:10px; color:var(--text-hint); }
-.rate-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-.rate-box { background:linear-gradient(160deg,#1F2933,#141B23); border:1px solid var(--border); border-radius:var(--radius-sm); padding:.75rem; }
-.rflag { font-size:20px; margin-bottom:4px; }
-.rcname { font-size:11px; color:var(--text-muted); }
-.rval { font-size:15px; font-weight:700; color:var(--text); direction:ltr; font-family: Arial, 'Segoe UI', sans-serif; }
+/* Zakat Card */
+.zakat-card { border-radius: var(--radius-sm); padding: 1.15rem; margin-bottom: 0.9rem; }
+.zakat-card.yes {
+  background: linear-gradient(165deg, rgba(234, 209, 150, 0.11), rgba(201, 165, 90, 0.04));
+  border: 1px solid rgba(234, 209, 150, 0.32);
+}
+.zakat-card.no {
+  background: linear-gradient(165deg, rgba(235, 142, 132, 0.10), rgba(235, 142, 132, 0.03));
+  border: 1px solid rgba(235, 142, 132, 0.30);
+}
+.zbadge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 999px; font-size: 11px; font-weight: 700; margin-bottom: 9px; }
+.by { background: rgba(234, 209, 150, 0.16); color: var(--gold-light); border: 1px solid rgba(234, 209, 150, 0.25); }
+.bn { background: rgba(235, 142, 132, 0.16); color: var(--red); border: 1px solid rgba(235, 142, 132, 0.25); }
+.zt { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.zt.y { color: var(--gold-light); } .zt.n { color: var(--red); }
+.zs { font-size: 12px; color: var(--text-muted); line-height: 1.65; margin-top: 3px; }
+.zamtrow {
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px;
+  margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(234, 209, 150, 0.18);
+}
 
-.stxt { font-size:11px; color:var(--text-hint); text-align:center; margin-top:4px; min-height:16px; }
-.lupd { font-size:10px; color:var(--text-hint); text-align:center; margin-top:4px; }
-.nnote { font-size:11px; color:var(--text-muted); text-align:center; margin-top:10px; padding:6px; background:#10161D; border-radius:var(--radius-sm); border:1px solid var(--border); }
-.price-warning { font-size:12px; font-weight:600; color:var(--red); text-align:center; margin-top:8px; padding:8px 10px; background:var(--red-bg); border:1px solid rgba(217,145,127,0.35); border-radius:var(--radius-sm); }
-.src-note { font-size:11px; color:var(--text-muted); text-align:center; margin-top:6px; line-height:1.6; }
-.src-note.warn { color:var(--red); }
-.sync { display:inline-block; width:6px; height:6px; border-radius:50%; background:#7FA6C9; margin-inline-start:4px; vertical-align:middle; }
-.sync.on { background:var(--gold-light); animation:sp 1s infinite; }
+.bar-wrap { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.bar-lbl { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
+.bar-track { background: #080B10; border-radius: 999px; height: 9px; overflow: hidden; border: 1px solid var(--border); }
+.bar-fill { height: 100%; border-radius: 999px; transition: width .5s ease; }
+.by2 { background: linear-gradient(90deg, #B89347, #F1DA9F); box-shadow: 0 0 10px rgba(234, 209, 150, 0.4); }
+.bn2 { background: linear-gradient(90deg, #B76E65, #EB8E84); }
+
+/* Bullion & Currency Cards */
+.gold-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.gold-box {
+  background: radial-gradient(circle at top, rgba(234, 209, 150, 0.10), rgba(16, 19, 24, 0.96) 75%);
+  border: 1px solid rgba(234, 209, 150, 0.26);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem; text-align: center;
+}
+.karat { font-size: 11px; color: var(--gold); font-weight: 700; margin-bottom: 3px; }
+.gprice { font-size: 19px; font-weight: 800; color: var(--gold-light); direction: ltr; font-family: 'Inter', Arial, sans-serif; }
+.gunit { font-size: 10px; color: var(--text-hint); margin-top: 2px; }
+
+.rate-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.rate-box {
+  background: linear-gradient(165deg, rgba(24, 31, 43, 0.85), rgba(13, 17, 24, 0.95));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.8rem 0.9rem;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.rflag { font-size: 20px; margin-bottom: 2px; }
+.rcname { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+.rval { font-size: 16px; font-weight: 700; color: var(--text); direction: ltr; font-family: 'Inter', Arial, sans-serif; align-self: flex-start; }
+
+.stxt { font-size: 11px; color: var(--text-hint); text-align: center; margin-top: 5px; min-height: 16px; line-height: 1.55; }
+.lupd { font-size: 10px; color: var(--text-hint); text-align: center; margin-top: 6px; }
+.nnote { font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 10px; padding: 8px; background: rgba(7, 9, 14, 0.7); border-radius: var(--radius-sm); border: 1px solid var(--border); }
+.price-warning { font-size: 12px; font-weight: 600; color: var(--red); text-align: center; margin-top: 8px; padding: 9px 11px; background: var(--red-bg); border: 1px solid rgba(235, 142, 132, 0.35); border-radius: var(--radius-sm); }
+.src-note { font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 6px; line-height: 1.6; }
+.src-note.warn { color: var(--red); }
+.sync { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #6FA8DC; margin-inline-start: 4px; vertical-align: middle; }
+.sync.on { background: var(--gold-light); animation: sp 1s infinite; }
 @keyframes sp { 0%,100%{opacity:1}50%{opacity:.3} }
 
 .stat-val, .gprice, .rval, .price-pill .val, .zamtrow span[style*="direction:ltr"] {
-  font-family: Arial, Helvetica, sans-serif;
-  font-variant-numeric: normal;
-  font-feature-settings: "lnum" 1;
+  font-family: 'Inter', Arial, Helvetica, sans-serif;
+  font-variant-numeric: tabular-nums;
 }
 
-@media (min-width: 900px) {
-  body { max-width: 1180px; padding: 0 1.5rem 2.5rem; }
-  .header { border-radius: 0 0 var(--radius) var(--radius); }
-  .tabs { display:none; }
-  .sections-wrap { display:grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; align-items:start; padding: 1.25rem 0; }
-  .section { display:block !important; padding: 0; }
-  .card { padding: 1.25rem 1.4rem; }
-  .auth-card { max-width: 380px; }
+/* Pro Chart Card */
+.range-btn {
+  background: rgba(12, 16, 22, 0.82);
+  border: 1px solid rgba(234, 209, 150, 0.22);
+  color: var(--text-muted);
+  padding: 5px 11px; border-radius: 999px;
+  font-size: 11px; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+  transition: all .15s ease; white-space: nowrap;
 }
-@media (min-width: 1300px) { body { max-width: 1320px; } }
+.range-btn:hover { border-color: var(--gold-light); color: var(--text); }
+.range-btn.active {
+  background: linear-gradient(180deg, #F0D99F, #CFA95A);
+  border-color: #F0D99F;
+  color: #161107;
+  box-shadow: 0 3px 12px rgba(234, 209, 150, 0.28);
+}
 
-.range-btn { background:rgba(184,155,94,0.08); border:1px solid var(--border); color:var(--text-muted); padding:3px 9px; border-radius:20px; font-size:10px; cursor:pointer; font-family:inherit; transition:all .15s; }
-.range-btn.active { background:rgba(184,155,94,0.22); border-color:var(--gold); color:var(--gold-light); font-weight:600; }
-.chart-stat { background:linear-gradient(160deg,#1F2933,#141B23); border:1px solid var(--border); border-radius:var(--radius-sm); padding:6px 8px; text-align:center; }
-.chart-stat-lbl { font-size:9px; color:var(--text-hint); margin-bottom:3px; }
-.chart-stat-val { font-size:13px; font-weight:700; font-family:Arial,sans-serif; }
-.chart-stat-val.up   { color:#8BC87A; }
-.chart-stat-val.down { color:var(--red); }
-.chart-stat-val.neu  { color:var(--gold-light); }
+.chart-card-pro {
+  padding: 1.1rem 1.15rem 1rem;
+  background:
+    radial-gradient(ellipse at top right, rgba(234, 209, 150, 0.06), transparent 55%),
+    linear-gradient(170deg, rgba(23, 29, 40, 0.96) 0%, rgba(13, 17, 24, 0.98) 100%);
+}
+.chart-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.chart-title-txt { font-size: 15px; font-weight: 800; color: var(--gold-light); }
+.chart-ranges { display: flex; gap: 5px; flex-wrap: wrap; }
+.chart-headline { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; padding: 2px 2px 0; }
+.chart-total-val { font-size: 24px; font-weight: 800; color: #FAF6EC; font-family: 'Inter', Arial, sans-serif; direction: ltr; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.chart-delta-txt { font-size: 13px; font-weight: 700; font-family: 'Inter', Arial, sans-serif; direction: ltr; unicode-bidi: isolate; font-variant-numeric: tabular-nums; }
+.chart-delta-up   { color: #7EE092; }
+.chart-delta-down { color: #EB8E84; }
+.chart-delta-neu  { color: var(--gold-light); }
+.chart-meta-line { font-size: 11px; color: var(--text-hint); padding: 4px 2px 0; min-height: 22px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.chart-del-btn {
+  background: rgba(235, 142, 132, 0.14); border: 1px solid rgba(235, 142, 132, 0.42);
+  color: #EB8E84; border-radius: 999px; padding: 2px 9px; font-size: 10px; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+}
+.chart-del-btn:hover { background: rgba(235, 142, 132, 0.26); }
+.chart-canvas-wrap { position: relative; height: 210px; margin-top: 8px; touch-action: pan-y; }
+.chart-footnote { font-size: 11px; color: var(--text-muted); line-height: 1.7; margin-top: 10px; padding-top: 9px; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+.chart-jump-btn {
+  width: 100%; margin-top: 10px;
+  background: rgba(234, 209, 150, 0.08);
+  border: 1px solid rgba(234, 209, 150, 0.30);
+  color: var(--gold-light); border-radius: var(--radius-sm);
+  padding: 9px; font-size: 12px; font-weight: 700;
+  cursor: pointer; font-family: inherit; transition: all .18s ease;
+}
+.chart-jump-btn:hover { background: rgba(234, 209, 150, 0.15); }
+
+/* ===== RESPONSIVE FIT: Tablet & Desktop ===== */
+@media (min-width: 640px) {
+  .app-wrap { max-width: 720px; }
+  .header { padding: 1rem 1.35rem 0.75rem; border-radius: 0 0 var(--radius) var(--radius); }
+  .tabs { margin: 0.75rem 1.1rem 0; border-radius: 12px; border: 1px solid var(--border); }
+  .section { padding: 1rem 1.1rem 1.5rem; }
+  .chart-canvas-wrap { height: 235px; }
+}
+
+@media (min-width: 1024px) {
+  .app-wrap { max-width: 1260px; padding: 0 1.25rem; }
+  .header {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 0.85rem 1.4rem;
+    border-radius: 0 0 var(--radius) var(--radius);
+    border-inline: 1px solid var(--border);
+  }
+  .header-top { margin-bottom: 0; gap: 18px; }
+  .prices-bar { justify-content: center; flex-wrap: wrap; overflow: visible; padding-bottom: 0; }
+  .tabs { display: none; }
+  .chart-jump-btn { display: none; }
+  .sections-wrap {
+    display: grid !important;
+    grid-template-columns: 1.02fr 1.32fr 0.96fr;
+    gap: 1.15rem;
+    align-items: start;
+    padding: 1.15rem 0 1.5rem;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(201, 165, 90, 0.25) transparent;
+  }
+  .sections-wrap::-webkit-scrollbar { width: 6px; }
+  .sections-wrap::-webkit-scrollbar-thumb { background: rgba(201, 165, 90, 0.25); border-radius: 999px; }
+  .section { display: block !important; height: auto; overflow: visible; padding: 0; }
+  .card { padding: 1.15rem 1.25rem; }
+  .auth-card { max-width: 400px; }
+  .chart-canvas-wrap { height: 225px; }
+}
+
+@media (min-width: 1380px) {
+  .app-wrap { max-width: 1400px; }
+  .sections-wrap { gap: 1.35rem; grid-template-columns: 1fr 1.35fr 0.95fr; }
+}
 </style>
 </head>
 <body>
@@ -225,7 +526,7 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
     <div class="tab"        onclick="showTab('zakat',this)"  data-i18n="tab_zakat">الزكاة</div>
   </div>
 
-  <div class="sections-wrap">
+  <div class="sections-wrap" id="sectionsWrap">
   <div class="section active" id="tab-assets">
     <div class="card">
       <div class="card-title"><span class="dot"></span> <span data-i18n="card_enter_assets">أدخل ما تملكه</span></div>
@@ -265,10 +566,39 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
         </div>
       </div>
       <div class="lupd" id="savedTime"></div>
+      <button type="button" class="chart-jump-btn" onclick="jumpToChart()" data-i18n="jump_to_chart">📈 متابعة شارت تطور الثروة</button>
     </div>
   </div>
 
   <div class="section" id="tab-prices">
+    <div class="card chart-card-pro" id="chartCard">
+      <!-- Header: title + range pills -->
+      <div class="chart-header">
+        <span class="chart-title-txt" data-i18n="card_history">قيمة ثروتك عبر الزمن</span>
+        <div class="chart-ranges" id="chartRangeBtns">
+          <button type="button" class="range-btn"        data-range="7"   onclick="setChartRange('7', this)"   data-i18n="range_7d">أسبوع</button>
+          <button type="button" class="range-btn active" data-range="30"  onclick="setChartRange('30', this)"  data-i18n="range_30d">شهر</button>
+          <button type="button" class="range-btn"        data-range="90"  onclick="setChartRange('90', this)"  data-i18n="range_90d">3 شهور</button>
+          <button type="button" class="range-btn"        data-range="365" onclick="setChartRange('365', this)" data-i18n="range_365d">سنة</button>
+          <button type="button" class="range-btn"        data-range="all" onclick="setChartRange('all', this)" data-i18n="range_all">الكل</button>
+        </div>
+      </div>
+      <!-- Headline value + delta -->
+      <div id="chartBigNum" style="display:none">
+        <div class="chart-headline">
+          <div id="chartTotalVal" class="chart-total-val"></div>
+          <span id="chartDeltaBadge" class="chart-delta-txt"></span>
+        </div>
+        <div id="chartDateRange" class="chart-meta-line"></div>
+      </div>
+      <!-- Chart canvas -->
+      <div class="chart-canvas-wrap" id="chartCanvasWrap">
+        <canvas id="wealthChart"></canvas>
+      </div>
+      <!-- No data / single point message -->
+      <div class="stxt" id="chartMsg" style="margin-top:6px" data-i18n="chart_no_data">احفظ بياناتك ليبدأ تتبع مستوى ثروتك تلقائياً كل 24 ساعة</div>
+      <div class="chart-footnote" data-i18n="chart_footnote">تُحسب القيمة لحظياً بأسعار الصاغة والعملات المنشورة، وتُسجَّل لقطة جديدة تلقائياً كل 24 ساعة وعند تعديل أصولك.</div>
+    </div>
     <div class="card">
       <div class="card-title"><span class="dot"></span> <span data-i18n="card_gold_prices">أسعار الذهب (جنيه/جرام)</span></div>
       <div class="gold-row">
@@ -289,21 +619,6 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: var(--text); m
       </div>
       <div class="stxt" id="rateSt"></div>
       <div class="lupd"  id="lastUpd"></div>
-    </div>
-    <div class="card" id="chartCard">
-      <div class="card-title" style="justify-content:space-between;flex-wrap:wrap;gap:6px">
-        <span style="display:flex;align-items:center;gap:6px"><span class="dot"></span> <span data-i18n="card_history">تاريخ ثروتك</span></span>
-        <div style="display:flex;gap:4px" id="chartRangeBtns">
-          <button class="range-btn active" onclick="setChartRange('7')"  data-i18n="range_7d">7 أيام</button>
-          <button class="range-btn"        onclick="setChartRange('30')" data-i18n="range_30d">30 يوم</button>
-          <button class="range-btn"        onclick="setChartRange('all')" data-i18n="range_all">الكل</button>
-        </div>
-      </div>
-      <div style="position:relative;height:190px">
-        <canvas id="wealthChart"></canvas>
-      </div>
-      <div id="chartStats" style="display:none;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px"></div>
-      <div class="stxt" id="chartMsg" style="margin-top:8px" data-i18n="chart_no_data">احفظ بياناتك أكثر من مرة لترى الرسم البياني</div>
     </div>
   </div>
 
@@ -468,18 +783,25 @@ var I18N = {
   ce_suffix:           { ar:' م', en:' CE' },
   ah_suffix:           { ar:' هـ', en:' AH' },
 
-  card_history:   { ar:'تاريخ ثروتك', en:'Wealth History' },
-  range_7d:       { ar:'7 أيام', en:'7 days' },
-  range_30d:      { ar:'30 يوم', en:'30 days' },
-  range_all:      { ar:'الكل', en:'All' },
-  chart_no_data:  { ar:'احفظ بياناتك أكثر من مرة لترى الرسم البياني', en:'Save your data more than once to see the chart' },
-  chart_now:      { ar:'الآن', en:'Now' },
-  chart_prev:     { ar:'السابق', en:'Prev' },
-  chart_change:   { ar:'التغيير', en:'Change' },
-  event_deposit:  { ar:'💰 أضفت أصول', en:'💰 Assets added' },
-  event_withdraw: { ar:'📤 سحبت أصول', en:'📤 Assets withdrawn' },
-  event_normal:   { ar:'💾 حفظ (بدون تغيير الأصول)', en:'💾 Saved (no asset change)' },
-  event_price:    { ar:'🔄 تغيير سعر', en:'🔄 Price change' }
+  card_history:       { ar:'قيمة ثروتك عبر الزمن', en:'Your Wealth Over Time' },
+  range_7d:           { ar:'أسبوع', en:'1W' },
+  range_30d:          { ar:'شهر', en:'1M' },
+  range_90d:          { ar:'3 شهور', en:'3M' },
+  range_365d:         { ar:'سنة', en:'1Y' },
+  range_all:          { ar:'الكل', en:'All' },
+  chart_no_data:      { ar:'احفظ بياناتك ليبدأ تتبع مستوى ثروتك تلقائياً كل 24 ساعة', en:'Save your assets to start tracking your wealth automatically every 24h' },
+  chart_single_point: { ar:'تم تسجيل نقطة البداية — ستظهر حركة التغيير تلقائياً كل 24 ساعة أو عند أي تعديل', en:'Starting point recorded — changes will appear every 24h or whenever you update assets' },
+  chart_footnote:     { ar:'تُحسب القيمة لحظياً بأسعار الصاغة والعملات المنشورة، وتُسجَّل لقطة جديدة تلقائياً كل ساعة عند تغيّر السعر أو يومياً كل 24 ساعة. اضغط على أي نقطة لحذفها لو كانت خطأً.', en:'Calculated live from published gold & currency rates. Snapshots record hourly on price moves and daily every 24h. Click any point to delete an erroneous entry.' },
+  delete_point:       { ar:'🗑 حذف النقطة', en:'🗑 Delete point' },
+  jump_to_chart:      { ar:'📈 متابعة شارت تطور الثروة', en:'📈 View Wealth History Chart' },
+  chart_now:          { ar:'الآن', en:'Now' },
+  chart_prev:         { ar:'السابق', en:'Prev' },
+  chart_change:       { ar:'التغيير', en:'Change' },
+  event_deposit:      { ar:'💰 أضفت أصول', en:'💰 Assets added' },
+  event_withdraw:     { ar:'📤 سحبت أصول', en:'📤 Assets withdrawn' },
+  event_normal:       { ar:'💾 حفظ يدوي', en:'💾 Manual save' },
+  event_price:        { ar:'📅 لقطة يومية (24 ساعة)', en:'📅 Daily snapshot (24h)' },
+  event_auto:         { ar:'📅 لقطة يومية (24 ساعة)', en:'📅 Daily snapshot (24h)' }
 };
 
 var currentLang = (function() {
@@ -519,6 +841,7 @@ window.toggleLang = function() {
   if (gold.g24 || gold.g21) updateGoldUI();
   renderSourceNote();
   if (assets) { updateSummary(); updateZakat(); }
+  renderChart();
 };
 
 var rates     = { USD:null, EUR:null, SAR:null };
@@ -611,7 +934,7 @@ function hideLoading() {
 function showApp() {
   hideLoading();
   document.getElementById('authWrap').style.display = 'none';
-  document.getElementById('appWrap').style.display  = 'block';
+  document.getElementById('appWrap').style.display  = 'flex';
   applyStaticI18n();
 }
 function showAuth() {
@@ -677,7 +1000,7 @@ async function loadCloud() {
     setSaveSt(t('load_error') + (e.code||e.message), 0);
   }
   setSyncing(false);
-  loadSnapshots();
+  await loadSnapshots();
 }
 
 async function saveCloud() {
@@ -739,7 +1062,10 @@ window.fetchRates = async function(forceRefresh) {
     updateRatesUI(); updateGoldUI(); renderSourceNote();
     setPriceWarning(false);
     document.getElementById('lastUpd').textContent = t('last_update')+' '+new Date(cache.ts).toLocaleTimeString(locale());
-    if (assets) { updateSummary(); updateZakat(); }
+    if (assets) {
+      updateSummary(); updateZakat();
+      ensureDailyOrPriceSnapshot(true);
+    }
     return;
   }
 
@@ -787,62 +1113,108 @@ window.fetchRates = async function(forceRefresh) {
   if (assets) {
     updateSummary(); updateZakat();
     if (!usedStale) {
-      // تسجيل snapshot تلقائي لو السعر اتغير وغيّر الإجمالي
-      var t2auto = calcTotals();
-      if (t2auto) {
-        var newTotal = Math.round(t2auto.total);
-        var lastTotal = snapshots.length > 0 ? snapshots[snapshots.length-1].total : null;
-        // سجّل لو مفيش snapshots أو لو الفرق > 0.1% من الإجمالي
-        var threshold = lastTotal ? Math.abs(newTotal - lastTotal) / lastTotal : 1;
-        if (lastTotal === null || threshold >= 0.001) {
-          recordPriceSnapshot(newTotal);
-        }
-      }
+      ensureDailyOrPriceSnapshot(false);
     }
   }
   document.getElementById('lastUpd').textContent = t('last_update')+' '+new Date().toLocaleTimeString(locale());
   if (!usedStale) saveRatesCache();
 };
 
-// snapshot تلقائي من تغيير الأسعار (بدون حفظ Firestore كثير — نحفظ locally دايماً وFirestore كل 30 دقيقة بس)
-var lastPriceSnapTs = 0;
-var PRICE_SNAP_MIN_INTERVAL = 30 * 60 * 1000; // 30 دقيقة بين كل Firestore write
+function getLocalDayKey(ts) {
+  var d = new Date(ts);
+  var y = d.getFullYear();
+  var m = String(d.getMonth() + 1).padStart(2, '0');
+  var day = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + day;
+}
 
-async function recordPriceSnapshot(newTotal) {
+function buildSnapshotPayload(totalEGP, eventType) {
+  var t2 = calcTotals();
   var now = Date.now();
-  var snap = {
+  return {
     ts: now,
-    total: newTotal,
-    g24val: Math.round((assets.g24||0)*(gold.g24||0)),
-    cashval: Math.round(calcTotals().cEGP),
-    event: 'price'
+    dayKey: getLocalDayKey(now),
+    total: Math.round(totalEGP),
+    g24val: Math.round((assets.g24 || 0) * (gold.g24 || 0)),
+    cashval: Math.round(t2 ? t2.cEGP : 0),
+    raw: rawAssetsValue(assets),
+    event: eventType
   };
+}
 
-  // دايماً حدّث الـ in-memory array والشارت
-  snapshots.push(snap);
+function persistLocalSnapshots() {
+  if (snapshots.length > SNAP_MAX) snapshots = snapshots.slice(-SNAP_MAX);
+  var clean = snapshots.map(function(s) {
+    var copy = Object.assign({}, s);
+    delete copy._id;
+    return copy;
+  });
+  try { localStorage.setItem('zakat_snaps', JSON.stringify(clean)); } catch(e) {}
+}
+
+// لقطة تلقائية يومياً كل 24 ساعة + لقطات ساعية عند تغيّر السعر لبناء منحنى مدرج دقيق
+var lastAutoSnapWriteTs = 0;
+var HOURLY_SNAP_INTERVAL = 60 * 60 * 1000; // ساعة بين اللقطات التلقائية داخل نفس اليوم
+
+async function ensureDailyOrPriceSnapshot(fromCache) {
+  if (!assets || !(gold.g24 > 0 && gold.g21 > 0)) return;
+  var t2 = calcTotals();
+  if (!t2) return;
+  var newTotal = Math.round(t2.total);
+  if (newTotal <= 0) return;
+
+  var now = Date.now();
+  var todayKey = getLocalDayKey(now);
+  var lastSnap = snapshots.length > 0 ? snapshots[snapshots.length - 1] : null;
+  var lastDayKey = lastSnap ? (lastSnap.dayKey || getLocalDayKey(lastSnap.ts)) : null;
+
+  var isNewDay = !lastSnap || lastDayKey !== todayKey;
+  var pctDiff  = (lastSnap && lastSnap.total > 0) ? Math.abs(newTotal - lastSnap.total) / lastSnap.total : 1;
+  var elapsed  = lastSnap ? (now - (lastSnap.ts || 0)) : HOURLY_SNAP_INTERVAL;
+
+  // سجّل نقطة جديدة إذا: (1) يوم جديد، أو (2) مرّت ساعة وتغيّر الإجمالي >= 0.05%
+  var shouldAppend = isNewDay || (!fromCache && elapsed >= HOURLY_SNAP_INTERVAL && pctDiff >= 0.0005);
+  if (!shouldAppend) return;
+
+  var freshSnap = buildSnapshotPayload(newTotal, 'auto');
+  snapshots.push(freshSnap);
   renderChart();
-
-  // Firestore: كتابة كل 30 دقيقة بس (عشان محدش يملأ quota)
-  if (curUser && (now - lastPriceSnapTs) >= PRICE_SNAP_MIN_INTERVAL) {
-    lastPriceSnapTs = now;
+  if (curUser) {
+    lastAutoSnapWriteTs = now;
     try {
-      await db.collection('users').doc(curUser.uid)
-              .collection('snapshots').add(snap);
+      var ref = await db.collection('users').doc(curUser.uid)
+                        .collection('snapshots').add(freshSnap);
+      freshSnap._id = ref.id;
     } catch(e) {
-      console.warn('price snapshot error', e);
+      console.warn('auto snapshot error', e);
     }
-  } else if (!curUser) {
-    // guest: تحديث localStorage
-    if (snapshots.length > 60) snapshots = snapshots.slice(-60);
-    try { localStorage.setItem('zakat_snaps', JSON.stringify(snapshots)); } catch(e) {}
+  } else {
+    persistLocalSnapshots();
   }
 }
 
 // Auto-refresh الأسعار كل ساعة
 setTimeout(function autoRefreshLoop() {
   fetchRates(true);
-  setTimeout(autoRefreshLoop, 60 * 60 * 1000); // كل ساعة
+  setTimeout(autoRefreshLoop, 60 * 60 * 1000);
 }, 60 * 60 * 1000);
+
+// ===== Daily midnight snapshot =====
+// كل يوم الساعة 12:01 بالليل يسجّل لقطة اليوم الجديد بالقيمة الحالية
+function scheduleMidnightSnapshot() {
+  var now = new Date();
+  var nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 1, 0, 0);
+  var msUntilMidnight = nextMidnight.getTime() - now.getTime();
+  setTimeout(function() {
+    if (assets && (gold.g24 || gold.g21)) {
+      fetchRates(true).catch(function() {
+        ensureDailyOrPriceSnapshot(false);
+      });
+    }
+    scheduleMidnightSnapshot();
+  }, msUntilMidnight);
+}
+scheduleMidnightSnapshot();
 
 function setPriceWarning(stale, lastGoodTs) {
   var el = document.getElementById('priceWarning');
@@ -906,6 +1278,7 @@ function updateGoldUI() {
 window.saveAssets = async function() {
   var btn = document.getElementById('saveBtn');
   btn.disabled=true; btn.textContent=t('btn_saving');
+  var prevAssets = assets ? Object.assign({}, assets) : null;
   assets = {
     g24: parseFloat(document.getElementById('g24').value)||0,
     g21: parseFloat(document.getElementById('g21').value)||0,
@@ -915,6 +1288,9 @@ window.saveAssets = async function() {
     egp: parseFloat(document.getElementById('iEGP').value)||0,
     savedAt: new Date().toISOString()
   };
+  if (!(gold.g24 > 0)) {
+    try { await fetchRates(false); } catch(e) {}
+  }
   checkNisab();
   var t2snap = calcTotals();
   if (curUser) {
@@ -924,7 +1300,9 @@ window.saveAssets = async function() {
     saveLocal();
     setSaveSt(t('saved_local'), 3000);
   }
-  await saveSnapshot(t2snap ? t2snap.total : 0);
+  if (gold.g24 > 0 || !(assets.g24 > 0 || assets.g21 > 0)) {
+    await saveSnapshot(t2snap ? t2snap.total : 0, prevAssets);
+  }
   updateSummary(); updateZakat();
   btn.disabled=false; btn.textContent=t('btn_save');
 };
@@ -1030,7 +1408,6 @@ function updateZakat() {
 
     html += '<div class="zakat-card yes">'
       +'<div class="zbadge by">'+t('badge_reached_nisab')+'</div>'
-      +'<div class="zt y">'+t('title_eligible')+'</div>'
       +'<div class="zs">'+t('reached_since')+' '+ds+' '+t('hawl_start_suffix')+'</div>'
       +'<div class="zs">'+t('wealth_now')+' <b>'+Math.round(t2.total).toLocaleString(locale())+' '+t('currency_egp')+'</b> '+t('nisab_label')+' '+Math.round(nEGP).toLocaleString(locale())+' '+t('currency_egp')+'</div>';
 
@@ -1064,10 +1441,19 @@ window.showTab = function(name,el) {
   document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('active'); });
   document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
   document.getElementById('tab-'+name).classList.add('active');
-  el.classList.add('active');
+  if (el) el.classList.add('active');
   // الشارت محتاج re-render لو التاب كان مخفي (canvas height=0)
   if (name === 'prices') {
     requestAnimationFrame(function() { renderChart(); });
+  }
+};
+
+window.jumpToChart = function() {
+  var pricesTab = document.querySelector('.tab[onclick*="prices"]');
+  showTab('prices', pricesTab);
+  var card = document.getElementById('chartCard');
+  if (card && card.scrollIntoView) {
+    requestAnimationFrame(function() { card.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
   }
 };
 
@@ -1075,14 +1461,13 @@ window.showTab = function(name,el) {
 
 var snapshots = [];
 var wealthChart = null;
-var chartRange = '7';
-var SNAP_MAX = 200; // max snapshots to store per user
+var chartRange = '30';
+var SNAP_MAX = 400; // يدعم سنة كاملة من اللقطات اليومية + أحداث الإيداع والسحب
 
 // حساب "وزن الأصول الخام" بأسعار مرجعية ثابتة
 // عشان نعرف لو الواحد ضخ أو سحب بغض النظر عن تغيير الأسعار
 function rawAssetsValue(a) {
-  // نستخدم أسعار مرجعية ثابتة (1 USD = 50 EGP، 1 SAR = 13.3، 1 EUR = 55، 24K = 6000 EGP/g)
-  // الهدف مقارنة الأصول الخام فقط، مش التأثر بتذبذب السعر
+  if (!a) return 0;
   var REF = { g24: 6000, g21: 5250, usd: 50, eur: 55, sar: 13.3, egp: 1 };
   return (a.g24||0)*REF.g24 + (a.g21||0)*REF.g21
        + (a.usd||0)*REF.usd + (a.eur||0)*REF.eur
@@ -1090,44 +1475,34 @@ function rawAssetsValue(a) {
 }
 
 // Save a snapshot whenever user saves assets
-async function saveSnapshot(totalEGP) {
-  var snap = {
-    ts: Date.now(),
-    total: Math.round(totalEGP),
-    g24val: Math.round((assets.g24||0)*(gold.g24||0)),
-    cashval: Math.round(calcTotals().cEGP),
-    // حفظ الأصول الخام عشان نقدر نحدد سبب التغيير
-    raw: rawAssetsValue(assets)
-  };
+async function saveSnapshot(totalEGP, prevAssets) {
+  var snap = buildSnapshotPayload(totalEGP, 'normal');
 
-  // تحديد نوع الحدث بناءً على تغيير الأصول الخام (مش الإجمالي)
-  // لو raw اتغير = أنت ضخيت أو سحبت
-  // لو raw ثابت والإجمالي اتغير = السعر هو السبب
-  if (snapshots.length > 0) {
-    var lastSnap = snapshots[snapshots.length - 1];
-    var prevRaw  = lastSnap.raw || 0;
-    var rawDiff  = prevRaw > 0 ? (snap.raw - prevRaw) / prevRaw * 100 : 0;
-    if      (rawDiff >=  0.5) snap.event = 'deposit';   // زاد الأصول > 0.5%
-    else if (rawDiff <= -0.5) snap.event = 'withdraw';  // قلّل الأصول > 0.5%
-    else                      snap.event = 'normal';    // تغيير سعر بس
-  } else {
-    snap.event = 'normal';
+  var prevRaw = prevAssets ? rawAssetsValue(prevAssets) : 0;
+  if (!prevRaw && snapshots.length > 0) {
+    for (var i = snapshots.length - 1; i >= 0; i--) {
+      if (snapshots[i].raw > 0) { prevRaw = snapshots[i].raw; break; }
+    }
+  }
+  if (prevRaw > 0) {
+    var rawDiff = (snap.raw - prevRaw) / prevRaw * 100;
+    if      (rawDiff >=  0.5) snap.event = 'deposit';
+    else if (rawDiff <= -0.5) snap.event = 'withdraw';
+    else                      snap.event = 'normal';
   }
 
-  // أضف للـ in-memory array مرة واحدة بس
   snapshots.push(snap);
 
   if (curUser) {
     try {
-      await db.collection('users').doc(curUser.uid)
-              .collection('snapshots').add(snap);
+      var ref = await db.collection('users').doc(curUser.uid)
+                        .collection('snapshots').add(snap);
+      snap._id = ref.id;
     } catch(e) {
       console.warn('snapshot save error', e);
     }
   } else {
-    // guest: sync localStorage
-    if (snapshots.length > 60) snapshots = snapshots.slice(-60);
-    try { localStorage.setItem('zakat_snaps', JSON.stringify(snapshots)); } catch(e) {}
+    persistLocalSnapshots();
   }
 
   renderChart();
@@ -1143,7 +1518,11 @@ async function loadSnapshots() {
                         .orderBy('ts', 'asc')
                         .limitToLast(SNAP_MAX)
                         .get();
-      col.forEach(function(doc) { snapshots.push(doc.data()); });
+      col.forEach(function(doc) {
+        var d = doc.data();
+        d._id = doc.id;
+        snapshots.push(d);
+      });
     } catch(e) {
       console.warn('snapshots load error', e.code || e.message);
     }
@@ -1153,181 +1532,456 @@ async function loadSnapshots() {
       if (raw) snapshots = JSON.parse(raw);
     } catch(e) {}
   }
-  // render بعد frame عشان لو التاب مش visible ميرسمش على canvas بـ height=0
+  snapshots.sort(function(a, b) { return (a.ts || 0) - (b.ts || 0); });
   requestAnimationFrame(function() { renderChart(); });
 }
 
-window.setChartRange = function(r) {
+window.setChartRange = function(r, btnEl) {
   chartRange = r;
   document.querySelectorAll('.range-btn').forEach(function(b) {
     b.classList.remove('active');
   });
-  event.target.classList.add('active');
+  if (btnEl) {
+    btnEl.classList.add('active');
+  } else {
+    var match = document.querySelector('.range-btn[data-range="' + r + '"]');
+    if (match) match.classList.add('active');
+  }
   renderChart();
 };
 
+var pinnedSnapTs = null;
+
+function isGlitchSnapshot(s, prev, next) {
+  if (!s || !(s.total > 0)) return true;
+  // لقطة اتسجلت قبل تحميل سعر الذهب (صفر ذهب مع إن المحفظة فيها ذهب)
+  if (s.g24val === 0 && assets && (assets.g24 > 0 || assets.g21 > 0) && s.event !== 'withdraw') {
+    return true;
+  }
+  // قفزة/هبوط لحظي > 25% رجع تاني لنفس المستوى في أقل من 6 ساعات (خطأ حفظ أو تجربة مؤقتة)
+  if (prev && next && (s.ts - prev.ts) < 6 * 3600 * 1000 && (next.ts - s.ts) < 6 * 3600 * 1000) {
+    var avgNeighbor = (prev.total + next.total) / 2;
+    var neighborsClose = prev.total > 0 && Math.abs(next.total - prev.total) / prev.total < 0.08;
+    var spikeRatio = avgNeighbor > 0 ? Math.abs(s.total - avgNeighbor) / avgNeighbor : 0;
+    if (neighborsClose && spikeRatio > 0.25) return true;
+  }
+  return false;
+}
+
 function getFilteredSnaps() {
   if (!snapshots.length) return [];
-  if (chartRange === 'all') return snapshots;
-  var days = parseInt(chartRange);
+  var clean = [];
+  for (var i = 0; i < snapshots.length; i++) {
+    var s = snapshots[i];
+    var prev = clean.length > 0 ? clean[clean.length - 1] : null;
+    var next = (i + 1 < snapshots.length) ? snapshots[i + 1] : null;
+    if (!isGlitchSnapshot(s, prev, next)) clean.push(s);
+  }
+  if (!clean.length) return [];
+  if (chartRange === 'all') return clean;
+  var days = parseInt(chartRange, 10);
   var cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-  var filtered = snapshots.filter(function(s) { return s.ts >= cutoff; });
-  // always include at least one point before cutoff for context
-  if (filtered.length === 0) return snapshots.slice(-1);
-  if (filtered.length < snapshots.length) {
-    var idx = snapshots.indexOf(filtered[0]);
-    if (idx > 0) filtered = [snapshots[idx-1]].concat(filtered);
+  var filtered = clean.filter(function(s) { return s.ts >= cutoff; });
+  if (filtered.length === 0) return clean.slice(-1);
+  if (filtered.length < clean.length) {
+    var idx = clean.indexOf(filtered[0]);
+    if (idx > 0) filtered = [clean[idx - 1]].concat(filtered);
   }
   return filtered;
 }
 
+window.deleteSnapshotByTs = async function(ts) {
+  var idx = snapshots.findIndex(function(s) { return s.ts === ts; });
+  if (idx === -1) return;
+  var removed = snapshots.splice(idx, 1)[0];
+  if (pinnedSnapTs === ts) pinnedSnapTs = null;
+  if (curUser && removed._id) {
+    try {
+      await db.collection('users').doc(curUser.uid)
+              .collection('snapshots').doc(removed._id).delete();
+    } catch(e) {
+      console.warn('snapshot delete error', e);
+    }
+  } else if (!curUser) {
+    persistLocalSnapshots();
+  }
+  renderChart();
+};
+
+function formatCompactVal(v) {
+  if (v >= 1000000) {
+    return (v / 1000000).toFixed(3).replace(/\.?0+$/, '') + 'M';
+  }
+  if (v >= 1000) {
+    var decimals = v >= 100000 ? 0 : 1;
+    return (v / 1000).toFixed(decimals).replace(/\.0$/, '') + 'K';
+  }
+  return Math.round(v).toLocaleString(locale());
+}
+
+function formatAxisVal(v, ySpan) {
+  if (v >= 1000000) {
+    var mDec = ySpan < 50000 ? 3 : ySpan < 250000 ? 2 : 1;
+    return (v / 1000000).toFixed(mDec) + 'M';
+  }
+  if (v >= 1000) {
+    var kDec = ySpan < 10000 ? 1 : 0;
+    return (v / 1000).toFixed(kDec) + 'K';
+  }
+  return Math.round(v);
+}
+
+function drawRoundedRect(ctx, x, y, w, h, r) {
+  var rad = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rad, y);
+  ctx.lineTo(x + w - rad, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + rad);
+  ctx.lineTo(x + w, y + h - rad);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - rad, y + h);
+  ctx.lineTo(x + rad, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - rad);
+  ctx.lineTo(x, y + rad);
+  ctx.quadraticCurveTo(x, y, x + rad, y);
+  ctx.closePath();
+}
+
+// Custom plugin: vertical dashed crosshair + glowing marker + floating white pill callout
+var vaultCrosshairPlugin = {
+  id: 'vaultCrosshair',
+  afterDatasetsDraw: function(chart) {
+    var active = chart.getActiveElements();
+    if (!active || !active.length) return;
+    var item = active[0];
+    var el = item.element;
+    if (!el) return;
+
+    var ctx = chart.ctx;
+    var area = chart.chartArea;
+    var px = el.x;
+    var py = el.y;
+    var rawPt = chart.data.datasets[item.datasetIndex].data[item.index];
+    var val = rawPt && typeof rawPt === 'object' ? rawPt.y : rawPt;
+    if (val === undefined || val === null) return;
+
+    ctx.save();
+    ctx.direction = 'ltr';
+
+    // 1. Vertical dashed crosshair line
+    ctx.beginPath();
+    ctx.setLineDash([3, 3]);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.78)';
+    ctx.lineWidth = 1.4;
+    ctx.moveTo(px, area.top);
+    ctx.lineTo(px, area.bottom);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 2. White floating pill callout with pointer
+    var labelText = formatCompactVal(val);
+    ctx.font = '700 13px Arial, sans-serif';
+    var textW = ctx.measureText(labelText).width;
+    var padX = 10;
+    var iconGap = 6;
+    var iconR = 5;
+    var pillW = padX * 2 + textW + iconGap + iconR * 2;
+    var pillH = 28;
+    var gap = 11;
+
+    var placeLeft = (px - gap - pillW) >= (area.left + 2);
+    var pillX = placeLeft ? (px - gap - pillW) : Math.min(px + gap, area.right - pillW - 2);
+    var pillY = Math.max(area.top + 2, Math.min(py - pillH / 2, area.bottom - pillH - 2));
+
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.48)';
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetY = 3;
+    ctx.fillStyle = '#FFFFFF';
+    drawRoundedRect(ctx, pillX, pillY, pillW, pillH, 8);
+    ctx.fill();
+
+    ctx.shadowColor = 'transparent';
+    var ptrY = Math.max(pillY + 7, Math.min(py, pillY + pillH - 7));
+    ctx.beginPath();
+    if (placeLeft) {
+      ctx.moveTo(pillX + pillW - 1, ptrY - 5);
+      ctx.lineTo(pillX + pillW + 6, ptrY);
+      ctx.lineTo(pillX + pillW - 1, ptrY + 5);
+    } else {
+      ctx.moveTo(pillX + 1, ptrY - 5);
+      ctx.lineTo(pillX - 6, ptrY);
+      ctx.lineTo(pillX + 1, ptrY + 5);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#141414';
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'left';
+    ctx.fillText(labelText, pillX + padX, pillY + pillH / 2 + 0.5);
+
+    var iconCx = pillX + pillW - padX - iconR;
+    var iconCy = pillY + pillH / 2;
+    ctx.beginPath();
+    ctx.arc(iconCx, iconCy, iconR, 0, Math.PI * 2);
+    ctx.fillStyle = '#FDFBF5';
+    ctx.fill();
+    ctx.lineWidth = 1.6;
+    ctx.strokeStyle = '#D5B976';
+    ctx.stroke();
+
+    // 3. Point marker on the curve
+    ctx.beginPath();
+    ctx.arc(px, py, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#E5C989';
+    ctx.stroke();
+
+    ctx.restore();
+  }
+};
+
+function formatSnapshotMetaHtml(s, first, last, canDelete) {
+  if (!s) {
+    var d0 = new Date(first.ts);
+    var d1 = new Date(last.ts);
+    return d0.toLocaleDateString(locale(), { day:'numeric', month:'short' })
+         + ' — ' + d1.toLocaleDateString(locale(), { day:'numeric', month:'short' });
+  }
+  var ds = new Date(s.ts);
+  var dateStr = ds.toLocaleDateString(locale(), { day:'numeric', month:'short', year:'numeric' })
+              + ' • ' + ds.toLocaleTimeString(locale(), { hour:'2-digit', minute:'2-digit' });
+  var evKey = s.event === 'deposit'  ? 'event_deposit'
+            : s.event === 'withdraw' ? 'event_withdraw'
+            : s.event === 'normal'   ? 'event_normal'
+            : 'event_auto';
+  var out = '<span>' + dateStr + ' | ' + t(evKey) + '</span>';
+  if (canDelete) {
+    out += ' <button type="button" class="chart-del-btn" onclick="deleteSnapshotByTs(' + s.ts + ')">' + t('delete_point') + '</button>';
+  }
+  return out;
+}
+
+function updateChartHeadline(point, first, last, isHover, isPinned) {
+  var totalEl = document.getElementById('chartTotalVal');
+  var badge   = document.getElementById('chartDeltaBadge');
+  var metaEl  = document.getElementById('chartDateRange');
+  if (!totalEl || !badge || !metaEl) return;
+
+  var target = point || last;
+  var diff = target.total - first.total;
+  var pct  = first.total > 0 ? (diff / first.total * 100) : 0;
+  var sign = diff > 0 ? '+' : '';
+  var deltaClass = diff > 0 ? 'chart-delta-up' : diff < 0 ? 'chart-delta-down' : 'chart-delta-neu';
+
+  totalEl.textContent = target.total.toLocaleString(locale()) + ' ' + t('currency_egp');
+  badge.textContent = sign + diff.toLocaleString(locale()) + ' (' + (diff > 0 ? '+' : '') + pct.toFixed(1) + '%)';
+  badge.className = 'chart-delta-txt ' + deltaClass;
+  metaEl.innerHTML = (isHover || isPinned)
+    ? formatSnapshotMetaHtml(target, first, last, !!isPinned)
+    : formatSnapshotMetaHtml(null, first, last, false);
+}
+
 function renderChart() {
-  var canvas = document.getElementById('wealthChart');
-  var msgEl  = document.getElementById('chartMsg');
-  var statsEl = document.getElementById('chartStats');
+  var canvas     = document.getElementById('wealthChart');
+  var canvasWrap = document.getElementById('chartCanvasWrap');
+  var msgEl      = document.getElementById('chartMsg');
+  var bigNumEl   = document.getElementById('chartBigNum');
   if (!canvas) return;
 
   var data = getFilteredSnaps();
 
-  if (data.length < 2) {
-    if (msgEl) { msgEl.style.display='block'; msgEl.textContent = t('chart_no_data'); }
-    if (statsEl) statsEl.style.display = 'none';
+  if (data.length === 0) {
+    if (msgEl)      { msgEl.style.display = 'block'; msgEl.textContent = t('chart_no_data'); }
+    if (bigNumEl)   bigNumEl.style.display = 'none';
+    if (canvasWrap) canvasWrap.style.display = 'none';
     if (wealthChart) { wealthChart.destroy(); wealthChart = null; }
     return;
   }
 
-  if (msgEl) msgEl.style.display = 'none';
+  if (data.length === 1) {
+    var single = data[0];
+    if (bigNumEl) {
+      bigNumEl.style.display = 'block';
+      updateChartHeadline(single, single, single, true, false);
+    }
+    if (msgEl)      { msgEl.style.display = 'block'; msgEl.textContent = t('chart_single_point'); }
+    if (canvasWrap) canvasWrap.style.display = 'none';
+    if (wealthChart) { wealthChart.destroy(); wealthChart = null; }
+    return;
+  }
 
-  // Build labels and point data
-  var labels = data.map(function(s) {
-    var d = new Date(s.ts);
-    return d.toLocaleDateString(locale(), { month:'short', day:'numeric' })
-           + ' ' + d.toLocaleTimeString(locale(), { hour:'2-digit', minute:'2-digit' });
+  if (msgEl)      msgEl.style.display = 'none';
+  if (canvasWrap) canvasWrap.style.display = 'block';
+  if (bigNumEl)   bigNumEl.style.display = 'block';
+
+  var last  = data[data.length - 1];
+  var first = data[0];
+  var pinnedIdx = pinnedSnapTs ? data.findIndex(function(s) { return s.ts === pinnedSnapTs; }) : -1;
+  if (pinnedIdx === -1) pinnedSnapTs = null;
+
+  updateChartHeadline(pinnedIdx >= 0 ? data[pinnedIdx] : last, first, last, pinnedIdx >= 0, pinnedIdx >= 0);
+
+  var points = data.map(function(s) {
+    return { x: s.ts, y: s.total };
   });
-  var values = data.map(function(s) { return s.total; });
 
-  // Colors per point for event markers
+  var dataMin = data[0].total, dataMax = data[0].total;
+  for (var k = 1; k < data.length; k++) {
+    if (data[k].total < dataMin) dataMin = data[k].total;
+    if (data[k].total > dataMax) dataMax = data[k].total;
+  }
+  var ySpan = Math.max(dataMax - dataMin, dataMax * 0.004, 100);
+  var yMin  = Math.max(0, dataMin - ySpan * 0.12);
+  var yMax  = dataMax + ySpan * 0.12;
+
+  var minTs = first.ts;
+  var maxTs = last.ts;
+  var spanMs = Math.max(1, maxTs - minTs);
+  var isShortSpan = spanMs < 36 * 3600 * 1000;
+
+  if (wealthChart) { wealthChart.destroy(); wealthChart = null; }
+  var ctx = canvas.getContext('2d');
+  var grad = ctx.createLinearGradient(0, 0, 0, 185);
+  grad.addColorStop(0,   'rgba(229, 201, 137, 0.30)');
+  grad.addColorStop(0.6, 'rgba(229, 201, 137, 0.10)');
+  grad.addColorStop(1,   'rgba(229, 201, 137, 0.01)');
+
+  var lineColor = '#E5C989';
+
   var pointColors = data.map(function(s) {
-    if (s.event === 'deposit')  return '#8BC87A';
-    if (s.event === 'withdraw') return '#D9917F';
-    if (s.event === 'price')    return '#7FA6C9';
-    return '#B89B5E';
+    if (s.event === 'deposit')  return '#7ED987';
+    if (s.event === 'withdraw') return '#D97875';
+    return 'rgba(0,0,0,0)';
   });
   var pointRadius = data.map(function(s) {
-    if (s.event === 'deposit' || s.event === 'withdraw') return 6;
-    if (s.event === 'price') return 3;
-    return 4;
+    if (s.event === 'deposit' || s.event === 'withdraw') return 3.5;
+    return 0;
   });
-
-  // Destroy previous chart
-  if (wealthChart) { wealthChart.destroy(); wealthChart = null; }
-
-  var ctx = canvas.getContext('2d');
-
-  // Gradient fill
-  var grad = ctx.createLinearGradient(0, 0, 0, 180);
-  grad.addColorStop(0,   'rgba(184,155,94,0.35)');
-  grad.addColorStop(1,   'rgba(184,155,94,0.02)');
 
   wealthChart = new Chart(ctx, {
     type: 'line',
+    plugins: [vaultCrosshairPlugin],
     data: {
-      labels: labels,
       datasets: [{
-        data: values,
-        borderColor: '#B89B5E',
+        data: points,
+        borderColor: lineColor,
         borderWidth: 2,
         backgroundColor: grad,
         pointBackgroundColor: pointColors,
         pointBorderColor: pointColors,
         pointRadius: pointRadius,
-        pointHoverRadius: 7,
+        pointHoverRadius: 0,
         fill: true,
-        tension: 0.35
+        tension: 0
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      animation: { duration: 400 },
+      animation: { duration: 240, easing: 'easeOutQuart' },
+      events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
+      interaction: { mode: 'nearest', axis: 'x', intersect: false },
+      onClick: function(evt, elements) {
+        if (elements && elements.length > 0) {
+          var idx = elements[0].index;
+          if (data[idx]) {
+            pinnedSnapTs = (pinnedSnapTs === data[idx].ts) ? null : data[idx].ts;
+            if (pinnedSnapTs) {
+              wealthChart.setActiveElements([{ datasetIndex: 0, index: idx }]);
+              wealthChart.update('none');
+              updateChartHeadline(data[idx], first, last, true, true);
+            } else {
+              wealthChart.setActiveElements([]);
+              wealthChart.update('none');
+              updateChartHeadline(last, first, last, false, false);
+            }
+          }
+        }
+      },
+      onHover: function(evt, elements) {
+        if (pinnedSnapTs) return;
+        if (elements && elements.length > 0) {
+          var idx = elements[0].index;
+          if (data[idx]) updateChartHeadline(data[idx], first, last, true, false);
+        }
+      },
       plugins: {
         legend: { display: false },
-        tooltip: {
-          rtl: currentLang === 'ar',
-          callbacks: {
-            title: function(items) { return labels[items[0].dataIndex]; },
-            label: function(item) {
-              var s = data[item.dataIndex];
-              var val = item.raw.toLocaleString(locale()) + ' ' + t('currency_egp');
-              var ev = s.event === 'deposit'  ? t('event_deposit')
-                     : s.event === 'withdraw' ? t('event_withdraw')
-                     : s.event === 'price'    ? t('event_price')
-                     : '';
-              return ev ? [val, ev] : val;
-            },
-            afterLabel: function(item) {
-              var s = data[item.dataIndex];
-              if (item.dataIndex > 0) {
-                var diff = s.total - data[item.dataIndex-1].total;
-                var sign = diff >= 0 ? '+' : '';
-                return sign + diff.toLocaleString(locale()) + ' ' + t('currency_egp');
-              }
-              return '';
-            }
-          },
-          backgroundColor: '#1A222C',
-          borderColor: 'rgba(184,155,94,0.4)',
-          borderWidth: 1,
-          titleColor: '#E3CF9F',
-          bodyColor: '#A9A38F',
-          padding: 10
-        }
+        tooltip: { enabled: false }
       },
       scales: {
         x: {
-          display: false
+          type: 'linear',
+          min: minTs,
+          max: maxTs,
+          grid: { display: false, drawBorder: false },
+          border: { display: false },
+          afterBuildTicks: function(axis) {
+            if (spanMs <= 0) return;
+            var tickCount = 3;
+            var out = [];
+            for (var i = 0; i < tickCount; i++) {
+              var ratio = tickCount === 1 ? 0.5 : (0.12 + i * (0.86 / (tickCount - 1)));
+              out.push({ value: Math.round(minTs + spanMs * ratio) });
+            }
+            axis.ticks = out;
+          },
+          ticks: {
+            color: '#A59E8E',
+            font: { size: 10, family: 'Arial' },
+            maxRotation: 0,
+            padding: 6,
+            callback: function(val) {
+              var d = new Date(val);
+              if (isShortSpan) {
+                return d.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' });
+              }
+              return d.toLocaleDateString(locale(), { day: 'numeric', month: 'long' });
+            }
+          }
         },
         y: {
-          grid: { color: 'rgba(255,255,255,0.05)' },
-          ticks: {
-            color: '#8A8672',
-            font: { size: 10, family: 'Arial' },
-            maxTicksLimit: 5,
-            callback: function(v) {
-              if (v >= 1000000) return (v/1000000).toFixed(2)+'M';
-              if (v >= 1000)    return (v/1000).toFixed(0)+'K';
-              return v;
-            }
-          },
+          display: true,
+          position: 'right',
+          min: yMin,
+          max: yMax,
+          grid: { color: 'rgba(255,255,255,0.07)', drawBorder: false },
           border: { display: false },
-          // padding بسيط فوق وتحت عشان النقاط ماتتقطعش
-          grace: '5%'
+          ticks: {
+            color: '#A59E8E',
+            font: { size: 10, family: 'Arial' },
+            count: 5,
+            padding: 8,
+            callback: function(v) { return formatAxisVal(v, yMax - yMin); }
+          }
         }
       }
     }
   });
 
-  // Stats row — الآن vs النقطة اللي قبلها مباشرة
-  var last  = data[data.length - 1];
-  var prev  = data[data.length - 2];  // النقطة السابقة مباشرة
-  var diff  = last.total - prev.total;
-  var pct2  = prev.total > 0 ? (diff / prev.total * 100).toFixed(1) : '0';
-  var sign  = diff >= 0 ? '+' : '';
-  var cls   = diff > 0 ? 'up' : diff < 0 ? 'down' : 'neu';
+  if (pinnedIdx >= 0) {
+    wealthChart.setActiveElements([{ datasetIndex: 0, index: pinnedIdx }]);
+    wealthChart.update('none');
+  }
 
-  // سبب آخر تغيير
-  var lastEvent = last.event || 'normal';
-  var reasonIcon = lastEvent === 'deposit'  ? '💰'
-                 : lastEvent === 'withdraw' ? '📤'
-                 : lastEvent === 'price'    ? '🔄'
-                 : '💾';
-
-  statsEl.innerHTML =
-    '<div class="chart-stat"><div class="chart-stat-lbl">'+t('chart_now')+'</div><div class="chart-stat-val neu" style="font-size:12px">'+last.total.toLocaleString(locale())+'</div></div>'
-   +'<div class="chart-stat"><div class="chart-stat-lbl">'+t('chart_prev')+'</div><div class="chart-stat-val neu" style="font-size:12px">'+prev.total.toLocaleString(locale())+'</div></div>'
-   +'<div class="chart-stat" style="grid-column:1/-1"><div class="chart-stat-lbl">'+t('chart_change')+'</div>'
-   +'<div class="chart-stat-val '+cls+'" style="font-size:14px">'+reasonIcon+' '+sign+diff.toLocaleString(locale())+' جنيه ('+sign+pct2+'%)</div></div>';
-  statsEl.style.display = 'grid';
+  if (!canvas._crosshairBound) {
+    canvas._crosshairBound = true;
+    var resetHover = function() {
+      if (!wealthChart || pinnedSnapTs) return;
+      var curData = getFilteredSnaps();
+      if (curData.length >= 2) {
+        wealthChart.setActiveElements([]);
+        wealthChart.update('none');
+        updateChartHeadline(curData[curData.length - 1], curData[0], curData[curData.length - 1], false, false);
+      }
+    };
+    canvas.addEventListener('mouseleave', resetHover);
+    canvas.addEventListener('touchend', function() {
+      setTimeout(resetHover, 1600);
+    }, { passive: true });
+  }
 }
 
 // ===== END WEALTH HISTORY =====
