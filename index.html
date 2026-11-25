@@ -107,7 +107,7 @@ body {
   backdrop-filter: blur(12px);
 }
 .auth-card { padding: 1.65rem; width: 100%; max-width: 370px; }
-.card { padding: 1.05rem 1.15rem; margin-bottom: 0.9rem; transition: border-color .2s ease; }
+.card { padding: 1.05rem 1.15rem; margin-bottom: 0.9rem; overflow: hidden; transition: border-color .2s ease; }
 .card:hover { border-color: rgba(234, 209, 150, 0.24); }
 .card-title {
   font-size: 14px; font-weight: 700; color: var(--gold-light);
@@ -273,8 +273,25 @@ body {
 .section.active { display: block; }
 
 .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-.input-group { display: flex; flex-direction: column; gap: 4px; }
+.input-group { display: flex; flex-direction: column; gap: 4px; min-width: 0; max-width: 100%; }
 .input-group label { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+.input-group input { min-width: 0; max-width: 100%; }
+.input-group input[type="date"] {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 43px;
+  -webkit-appearance: none;
+  appearance: none;
+  direction: ltr;
+  text-align: left;
+  line-height: 1.4;
+}
+.input-group input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+  margin: 0;
+}
 
 /* Summary Stat Boxes */
 .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 9px; }
